@@ -1,100 +1,164 @@
-# Validatore di Circuiti Oscillatori a Quarzo
+# Crystal Oscillator Validator
 
-## Versione
-3.1
-
-## Autore
-Samuele Lorenzoni
+**Versione:** 3.4  
+**Autore:** Samuele Lorenzoni
 
 ---
 
 ## Descrizione
-Questo software supporta ingegneri e progettisti elettronici nella validazione e nel dimensionamento di circuiti oscillatori in configurazione Pierce, comunemente usati con microcontrollori. A partire dai dati del cristallo di quarzo e dai parametri del circuito, l’applicazione calcola i principali indicatori operativi e produce un report di valutazione utile a verificare la robustezza del progetto.
+
+Questo strumento software è progettato per ingegneri e progettisti elettronici al fine di verificare e dimensionare circuiti oscillatori a topologia Pierce, comunemente impiegati con microcontrollori e altri dispositivi digitali.
+
+A partire dalle specifiche del cristallo di quarzo e dai parametri del circuito, l'applicazione calcola i parametri operativi chiave (capacità di carico effettiva, transconduttanza critica, margine di guadagno, drive level) e fornisce una valutazione immediata sulla robustezza e l'affidabilità del design.
 
 ---
 
-## Output e valutazione qualitativa
-L’applicazione calcola i parametri principali e fornisce una valutazione qualitativa immediata in tre livelli:
-- OK
-- Attenzione
-- Critico
+## Caratteristiche Principali
+
+* **Analisi Completa**: Calcolo dei principali indicatori di performance di un oscillatore Pierce.
+* **Preset di Componenti**: Database integrato di quarzi (es. ECS, Abracon, MicroCrystal) e sonde di misura (es. LeCroy, Tektronix) per accelerare l'inserimento dei dati.
+* **Salvataggio e Caricamento Sessioni**: Possibilità di salvare tutti i parametri di input in un file locale (`.xtal`) e ricaricarli in un secondo momento per continuare il lavoro.
+* **Interfaccia Intuitiva**: GUI progettata per un inserimento dati efficiente, con gestione automatica delle unità di misura.
+* **Validazione Immediata**: Report finale con indicazioni cromatiche (OK, Attenzione, Critico) per una rapida interpretazione dei risultati.
+* **Architettura Modulare (MVC)**: Motore di calcolo disaccoppiato dall'interfaccia utente per garantire manutenibilità e scalabilità.
 
 ---
 
-## Parametri calcolati
-- Capacità di carico effettiva (CL_eff)  
-- Transconduttanza critica (gm_crit)  
-- Margine di guadagno (Gain_Margin)  
-- Drive Level (potenza dissipata dal cristallo)
+## Preset e Analisi Worst-Case
+
+Lo strumento include un database di preset per quarzi di uso comune. Questa funzionalità permette di caricare automaticamente i parametri di datasheet del componente selezionato.
+
+Per i preset che si riferiscono a una *serie* di componenti (es. Abracon IXA20), i valori caricati sono rappresentativi di un caso d'uso comune (es. 24 MHz) e utilizzano le specifiche **worst-case** (es. ESR massimo) indicate dal produttore. Questo approccio garantisce che la validazione del circuito sia conservativa e robusta, coprendo le condizioni operative più critiche.
 
 ---
 
-## Caratteristiche principali
-- Analisi completa dei parametri di un oscillatore Pierce  
-- Preset disponibili per quarzi e sonde di misura di uso comune  
-- Interfaccia grafica con gestione automatica delle unità di misura  
-- Report sintetico con valutazione qualitativa immediata  
-- Architettura modulare basata sul pattern MVC, pensata per manutenzione ed estendibilità  
-- Preset e analisi worst-case
+## Modello Teorico di Riferimento
 
----
+L'analisi si basa sul modello elettrico equivalente del risonatore a quarzo e sulle condizioni di Barkhausen per l'innesco dell'oscillazione, in accordo con le principali application note di settore (es. AN2867 di STMicroelectronics).
 
-## Preset e analisi worst-case
-Il software include preset per cristalli di quarzo diffusi (ad esempio la serie Abracon IXA20), basati su valori tipici di targa. Per analisi più restrittive è possibile configurare manualmente scenari worst-case utilizzando le tolleranze indicate nei datasheet dei componenti.
+### 1. Capacità di Carico Effettiva ($C_{L_{eff}}$)
 
----
+È la capacità totale vista ai capi del cristallo. Assumendo un layout simmetrico, è calcolata come la serie dei due rami capacitivi del circuito:
 
-## Modello teorico e formule
-
-### 1) Capacità di carico effettiva (CL_eff)
-Si assume un layout simmetrico con due condensatori di carico identici (CL_sel) e capacità parassite (C_stray) su un singolo ramo del circuito.
-
-Formule:
-```text
 C_stray_single_leg = CS_PCB + CS_PIN
 CL_eff = (CL_sel + C_stray_single_leg) / 2.0
-```
 
-Dove:
-- CL_sel = capacità del singolo condensatore di carico esterno  
-- CS_PCB = capacità parassita introdotta dal PCB (per ramo)  
-- CS_PIN = capacità parassita del pin del microcontrollore (per ramo)
+* `CL_sel`: Capacità del singolo condensatore di carico esterno.
+* `CS_PCB`: Capacità parassita del PCB per un singolo ramo.
+* `CS_PIN`: Capacità parassita del pin del MCU per un singolo ramo.
 
----
+### 2. Transconduttanza Critica e Margine di Guadagno
 
-### 2) Transconduttanza critica (gm_crit) e margine di guadagno
-Perché l’oscillazione si inneschi, la transconduttanza del driver (gm) deve essere superiore al valore critico gm_crit.
+Per garantire l'innesco dell'oscillazione, la transconduttanza ($g_m$) dell'amplificatore del MCU deve superare un valore critico ($g_{m_{crit}}$):
 
-Formula per la transconduttanza critica:
-```text
-gm_crit = 4 * ESR * (2 * PI * F)^2 * (C0 + CL_eff)^2
-```
+gm_crit = 4 * (ESR_max + R_ext) * (2 * pi * f)^2 * (C0 + CL_eff)^2
 
-Margine di guadagno:
-```text
-Gain_Margin = gm / gm_crit
-```
+Il **Margine di Guadagno** (Gain Margin) quantifica la robustezza dell'innesco:
 
-Linea guida di progetto:
-- Per un design robusto è consigliato avere Gain_Margin ≥ 5.
+GainMargin = gm / gm_crit
 
-Dove:
-- ESR = Equivalent Series Resistance del cristallo  
-- F = frequenza di risonanza (Hz)  
-- C0 = capacità shunt del cristallo  
-- CL_eff = capacità di carico effettiva calcolata sopra  
-- gm = transconduttanza del driver (microcontrollore o stadio attivo)
+Un valore `GainMargin > 5` è raccomandato per un design robusto.
 
----
+### 3. Drive Level (DL)
 
-### 3) Drive Level
-Il Drive Level è la potenza dissipata dal cristallo e viene calcolata a partire dalla tensione e dalle correnti nel circuito. Il software fornisce il valore di Drive Level confrontandolo con i limiti massimi raccomandati dal produttore per valutare eventuali rischi di danneggiamento o instabilità.
+Rappresenta la potenza dissipata dal cristallo. Un valore eccessivo può danneggiarlo. Viene stimato misurando la tensione picco-picco ($V_{pp}$) su un ramo del circuito:
+
+Sì, ecco il file README.md aggiornato alla versione più recente del nostro script (v3.4), con tutte le funzionalità che abbiamo implementato e le formule corrette.
+
+È scritto in formato Markdown, quindi una volta caricato su GitHub verrà visualizzato in modo professionale, ma con le formule in formato testuale per poterle copiare facilmente.
+
+Markdown
+
+# Crystal Oscillator Validator
+
+**Versione:** 3.4  
+**Autore:** Samuele Lorenzoni
 
 ---
 
-## Note finali
-- I risultati devono essere interpretati tenendo conto delle tolleranze dei componenti e delle condizioni operative reali (temperatura, alimentazione, layout PCB).  
-- Per analisi conservative utilizzare i preset worst-case o inserire manualmente le tolleranze dei componenti dai datasheet.
+## Descrizione
+
+Questo strumento software è progettato per ingegneri e progettisti elettronici al fine di verificare e dimensionare circuiti oscillatori a topologia Pierce, comunemente impiegati con microcontrollori e altri dispositivi digitali.
+
+A partire dalle specifiche del cristallo di quarzo e dai parametri del circuito, l'applicazione calcola i parametri operativi chiave (capacità di carico effettiva, transconduttanza critica, margine di guadagno, drive level) e fornisce una valutazione immediata sulla robustezza e l'affidabilità del design.
 
 ---
-```
+
+## Caratteristiche Principali
+
+* **Analisi Completa**: Calcolo dei principali indicatori di performance di un oscillatore Pierce.
+* **Preset di Componenti**: Database integrato di quarzi (es. ECS, Abracon, MicroCrystal) e sonde di misura (es. LeCroy, Tektronix) per accelerare l'inserimento dei dati.
+* **Salvataggio e Caricamento Sessioni**: Possibilità di salvare tutti i parametri di input in un file locale (`.xtal`) e ricaricarli in un secondo momento per continuare il lavoro.
+* **Interfaccia Intuitiva**: GUI progettata per un inserimento dati efficiente, con gestione automatica delle unità di misura.
+* **Validazione Immediata**: Report finale con indicazioni cromatiche (OK, Attenzione, Critico) per una rapida interpretazione dei risultati.
+* **Architettura Modulare (MVC)**: Motore di calcolo disaccoppiato dall'interfaccia utente per garantire manutenibilità e scalabilità.
+
+---
+
+## Preset e Analisi Worst-Case
+
+Lo strumento include un database di preset per quarzi di uso comune. Questa funzionalità permette di caricare automaticamente i parametri di datasheet del componente selezionato.
+
+Per i preset che si riferiscono a una *serie* di componenti (es. Abracon IXA20), i valori caricati sono rappresentativi di un caso d'uso comune (es. 24 MHz) e utilizzano le specifiche **worst-case** (es. ESR massimo) indicate dal produttore. Questo approccio garantisce che la validazione del circuito sia conservativa e robusta, coprendo le condizioni operative più critiche.
+
+---
+
+## Modello Teorico di Riferimento
+
+L'analisi si basa sul modello elettrico equivalente del risonatore a quarzo e sulle condizioni di Barkhausen per l'innesco dell'oscillazione, in accordo con le principali application note di settore (es. AN2867 di STMicroelectronics).
+
+### 1. Capacità di Carico Effettiva ($C_{L_{eff}}$)
+
+È la capacità totale vista ai capi del cristallo. Assumendo un layout simmetrico, è calcolata come la serie dei due rami capacitivi del circuito:
+
+C_stray_single_leg = CS_PCB + CS_PIN
+CL_eff = (CL_sel + C_stray_single_leg) / 2.0
+
+
+* `CL_sel`: Capacità del singolo condensatore di carico esterno.
+* `CS_PCB`: Capacità parassita del PCB per un singolo ramo.
+* `CS_PIN`: Capacità parassita del pin del MCU per un singolo ramo.
+
+### 2. Transconduttanza Critica e Margine di Guadagno
+
+Per garantire l'innesco dell'oscillazione, la transconduttanza ($g_m$) dell'amplificatore del MCU deve superare un valore critico ($g_{m_{crit}}$):
+
+gm_crit = 4 * (ESR_max + R_ext) * (2 * pi * f)^2 * (C0 + CL_eff)^2
+
+
+Il **Margine di Guadagno** (Gain Margin) quantifica la robustezza dell'innesco:
+
+GainMargin = gm / gm_crit
+
+
+Un valore `GainMargin > 5` è raccomandato per un design robusto.
+
+### 3. Drive Level (DL)
+
+Rappresenta la potenza dissipata dal cristallo. Un valore eccessivo può danneggiarlo. Viene stimato misurando la tensione picco-picco ($V_{pp}$) su un ramo del circuito:
+
+C_leg_for_dl = CL_sel + CS_PCB + CS_PIN + C_probe
+DL = ((ESR_max + R_ext) / 2.0) * (pi * f * C_leg_for_dl * Vpp)^2
+
+* `C_probe`: Capacità di ingresso della sonda utilizzata per la misura.
+
+---
+
+## Architettura Software
+
+L'applicazione adotta il design pattern **Model-View-Controller (MVC)**:
+
+* **Model (`CrystalCircuitModel`)**: Implementa il motore di calcolo e le formule teoriche.
+* **View (`MainView`)**: Gestisce l'intera interfaccia utente (widget, layout, stili).
+* **Controller (`AppController`)**: Funge da orchestratore, coordinando il flusso di dati tra Model e View.
+
+---
+
+## Requisiti e Installazione
+
+* **Python**: Versione 3.7 o superiore.
+* **Dipendenze**: `numpy`
+
+Installare la dipendenza necessaria tramite pip:
+```bash
+pip install numpy

@@ -9,7 +9,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.3"
+    APP_VERSION = "3.4"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -195,7 +195,7 @@ class CrystalCircuitModel:
             # Gain Margin
             gain_margin = gm / gm_crit if gm_crit > 0 else float('inf')
 
-            # Estimated external resistor (reactance of one load cap)
+            # Reactance of one load capacitor
             rext_est = 1.0 / (2 * np.pi * f * cl_sel) if cl_sel > 0 else 0.0
 
             # Drive Level calculation uses the total capacitance on the measured leg
@@ -261,7 +261,7 @@ class MainView(ttk.Frame):
     def _create_widgets(self):
         self.pack(fill="both", expand=True, padx=10, pady=10)
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(4, weight=1)  # Adjusted for preset selector row
+        self.rowconfigure(4, weight=1)
 
         self._create_header(self)
         self._create_preset_selector(self)
@@ -311,43 +311,43 @@ class MainView(ttk.Frame):
                 var.trace_add("write", lambda *args, k=key: self.controller.on_input_change(k))
                 self.vars[key] = var
 
-                # --- Main row frame with white background ---
                 bg_frame = tk.Frame(input_container, background=AppConfig.COLOR_FRAME_BG)
                 bg_frame.grid(row=row_idx, column=0, sticky='nsew', ipady=2)
 
-                # --- Grid configuration for alignment ---
                 bg_frame.columnconfigure(0, minsize=320, weight=0)  # Label
-                bg_frame.columnconfigure(1, weight=1)  # Entry
-                bg_frame.columnconfigure(2, minsize=80, weight=0)  # Unit Combo
-                bg_frame.columnconfigure(3, weight=2)  # Description
-                bg_frame.columnconfigure(4, weight=1)  # Probe Selector
+                bg_frame.columnconfigure(1, weight=1)  # Input Field Frame
+                bg_frame.columnconfigure(2, weight=2)  # Description
 
-                # --- Widgets placement ---
                 label = ttk.Label(bg_frame, text=f"{name}:", font=AppConfig.FONT_BOLD, style="Input.TLabel")
                 label.grid(row=0, column=0, sticky="e", padx=(0, 10))
 
-                entry = ttk.Entry(bg_frame, textvariable=var, width=15, justify='right')
-                entry.grid(row=0, column=1, sticky='ew')
+                input_field_frame = ttk.Frame(bg_frame, style="Input.TFrame")
+                input_field_frame.grid(row=0, column=1, sticky='ew')
+                input_field_frame.columnconfigure(0, weight=1)
+
+                entry = ttk.Entry(input_field_frame, textvariable=var, width=15, justify='right')
+                entry.grid(row=0, column=0, sticky='ew')
                 self.entries[key] = entry
 
-                unit_combo = ttk.Combobox(bg_frame, values=units, width=6, state='readonly')
+                unit_combo = ttk.Combobox(input_field_frame, values=units, width=6, state='readonly')
                 unit_combo.set(default_unit)
                 unit_combo.bind("<<ComboboxSelected>>", lambda e, k=key: self.controller.on_input_change(k))
-                unit_combo.grid(row=0, column=2, sticky='w', padx=5)
+                unit_combo.grid(row=0, column=1, sticky='w', padx=5)
                 self.unit_combos[key] = unit_combo
 
                 desc_label = ttk.Label(bg_frame, text=desc, foreground='gray', wraplength=400,
                                        font=AppConfig.FONT_ITALIC, style="Input.TLabel")
-                desc_label.grid(row=0, column=3, sticky="w", padx=10)
+                desc_label.grid(row=0, column=2, sticky="w", padx=10)
 
                 if key == Param.C_PROBE:
-                    self._create_probe_selector(bg_frame, row=0, column=4)
+                    self._create_probe_selector(bg_frame, row=0, column=3)
 
                 row_idx += 1
 
     def _create_probe_selector(self, parent, row, column):
+        parent.columnconfigure(column, weight=0)
         probe_selector_frame = ttk.Frame(parent, style="Input.TFrame")
-        probe_selector_frame.grid(row=row, column=column, sticky='w', padx=10)
+        probe_selector_frame.grid(row=row, column=column, sticky='e', padx=10)
 
         ttk.Label(probe_selector_frame, text="Preset Sonda:", style="Input.TLabel").pack(side='left')
         self.probe_combo = ttk.Combobox(probe_selector_frame, values=list(AppConfig.PROBE_MODELS.keys()),
