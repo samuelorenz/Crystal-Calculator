@@ -8,7 +8,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "2.8"
+    APP_VERSION = "3.1"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -87,6 +87,30 @@ class AppConfig:
         "Sonda Passiva (Tek P5050B)": 12.0,  # Valore in pF
     }
     DEFAULT_PROBE_NAME = "Sonda Attiva (LeCroy ZS1500)"
+
+    # Crystal Presets
+    XTAL_PRESETS = {
+        "Manuale/Custom": {},
+        "ECS-250-10-36Q-AES-TR": {
+            "FREQ": ("25", "MHz"),
+            "C0": ("5", "pF"),
+            "ESR_MAX": ("60", "Ohm"),
+            "DL_MAX": ("100", "uW"),
+        },
+        "Abracon IXA20 (24MHz)": {
+            "FREQ": ("24", "MHz"),
+            "C0": ("5", "pF"),
+            "ESR_MAX": ("40", "Ohm"),
+            "DL_MAX": ("300", "uW"),
+        },
+        "MicroCrystal CM7V-T1A (32.768kHz)": {
+            "FREQ": ("32.768", "kHz"),
+            "C0": ("1.3", "pF"),
+            "ESR_MAX": ("70", "kOhm"),
+            "DL_MAX": ("1.0", "uW"),
+        }
+    }
+    DEFAULT_XTAL_NAME = "Manuale/Custom"
 
     # GUI Layout Definitions: (key, name, default_val, default_unit, unit_list, description)
     PARAM_MAP = {
@@ -171,7 +195,7 @@ class CrystalCircuitModel:
             gain_margin = gm / gm_crit if gm_crit > 0 else float('inf')
 
             # Estimated external resistor (reactance of one load cap)
-            rext_est = 1.0 / (2.0 * np.pi * f * cl_sel) if cl_sel > 0 else 0.0
+            rext_est = 1.0 / (2 * np.pi * f * cl_sel) if cl_sel > 0 else 0.0
 
             # Drive Level calculation uses the total capacitance on the measured leg
             c_leg_for_dl = cl_sel + c_stray_single_leg + c_probe
@@ -205,6 +229,7 @@ class MainView(ttk.Frame):
         self.unit_combos = {}
         self.output_labels = {}
         self.probe_combo = None
+        self.xtal_combo = None
 
         self._configure_styles()
         self._create_widgets()
@@ -224,7 +249,7 @@ class MainView(ttk.Frame):
                         foreground=cfg.COLOR_ACCENT_DARK)
         style.configure("TEntry", fieldbackground=cfg.COLOR_FRAME_BG, font=('Courier New', 10))
         style.map("Invalid.TEntry", fieldbackground=[("!disabled", cfg.COLOR_INVALID_ENTRY)])
-        style.configure("Probe.TEntry", fieldbackground=cfg.COLOR_DISABLED_ENTRY, font=('Courier New', 10))
+        style.configure("Readonly.TEntry", fieldbackground=cfg.COLOR_DISABLED_ENTRY)
         style.configure("Calc.TButton", font=cfg.FONT_HEADER, padding=10, background=cfg.COLOR_ACCENT,
                         foreground='white')
         style.map("Calc.TButton", background=[('active', cfg.COLOR_ACCENT_DARK)])
@@ -235,9 +260,10 @@ class MainView(ttk.Frame):
     def _create_widgets(self):
         self.pack(fill="both", expand=True, padx=10, pady=10)
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(3, weight=1)
+        self.rowconfigure(4, weight=1)  # Adjusted for preset selector row
 
         self._create_header(self)
+        self._create_preset_selector(self)
         self._create_input_frame(self)
         self._create_control_frame(self)
         self._create_output_frame(self)
@@ -247,9 +273,20 @@ class MainView(ttk.Frame):
         header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
         ttk.Label(header_frame, text="Validatore Oscillatore a Cristallo", style="Header.TLabel").pack()
 
+    def _create_preset_selector(self, parent):
+        frame = ttk.Frame(parent, padding=(0, 0, 0, 15))
+        frame.grid(row=1, column=0, sticky="ew")
+
+        ttk.Label(frame, text="Preset Quarzo:", font=AppConfig.FONT_BOLD).pack(side="left", padx=(0, 10))
+
+        self.xtal_combo = ttk.Combobox(frame, values=list(AppConfig.XTAL_PRESETS.keys()), state='readonly', width=30)
+        self.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
+        self.xtal_combo.bind("<<ComboboxSelected>>", self.controller.update_from_xtal_preset)
+        self.xtal_combo.pack(side="left")
+
     def _create_input_frame(self, parent):
         frame = ttk.Frame(parent)
-        frame.grid(row=1, column=0, sticky="ew")
+        frame.grid(row=2, column=0, sticky="ew")
         frame.columnconfigure(0, weight=1)
         self._populate_input_fields(frame)
 
@@ -320,7 +357,7 @@ class MainView(ttk.Frame):
 
     def _create_control_frame(self, parent):
         frame = ttk.Frame(parent, padding="10 0 10 0")
-        frame.grid(row=2, column=0, pady=20)
+        frame.grid(row=3, column=0, pady=20)
 
         frame.columnconfigure(0, weight=1)
 
@@ -338,7 +375,7 @@ class MainView(ttk.Frame):
     def _create_output_frame(self, parent):
         frame = ttk.LabelFrame(parent, text="REPORT TECNICO: PARAMETRI DERIVATI", style="Output.TLabelframe",
                                padding="15")
-        frame.grid(row=3, column=0, sticky="nsew")
+        frame.grid(row=4, column=0, sticky="nsew")
 
         frame.columnconfigure(0, minsize=320, weight=0)
         frame.columnconfigure(1, minsize=120, weight=0)
@@ -457,17 +494,40 @@ class AppController:
                 self.view.output_labels[key].config(text="Dati modificati, ricalcolare.",
                                                     foreground=AppConfig.COLOR_STALE_RESULT, font=AppConfig.FONT_STATUS)
 
+    def update_from_xtal_preset(self, event=None):
+        """Updates input fields based on the selected crystal preset."""
+        selected_xtal = self.view.xtal_combo.get()
+        preset = AppConfig.XTAL_PRESETS.get(selected_xtal, {})
+
+        # Define which parameters are controlled by the preset
+        preset_params = [Param.FREQ, Param.C0, Param.ESR_MAX, Param.DL_MAX]
+
+        is_custom = selected_xtal == AppConfig.DEFAULT_XTAL_NAME
+
+        # Update values and states for preset-controlled fields
+        for key in preset_params:
+            if key.name in preset:
+                val, unit = preset[key.name]
+                self.view.vars[key].set(val)
+                self.view.unit_combos[key].set(unit)
+
+            entry_style = 'TEntry' if is_custom else 'Readonly.TEntry'
+            self.view.entries[key].config(state='normal' if is_custom else 'readonly', style=entry_style)
+            self.view.unit_combos[key].config(state='readonly' if is_custom else 'disabled')
+
+        self.on_input_change(None)  # Mark results as stale
+
     def update_probe_capacitance(self, event=None):
         """Updates the C_probe entry based on combobox selection."""
         selected_name = self.view.probe_combo.get()
 
         if selected_name == "Manuale/Custom":
-            self.view.entries[Param.C_PROBE].config(state='normal')
+            self.view.entries[Param.C_PROBE].config(state='normal', style='TEntry')
         elif selected_name in AppConfig.PROBE_MODELS:
             probe_cap_val = AppConfig.PROBE_MODELS[selected_name]
             self.view.vars[Param.C_PROBE].set(f"{probe_cap_val}")
             self.view.unit_combos[Param.C_PROBE].set("pF")
-            self.view.entries[Param.C_PROBE].config(state='readonly')
+            self.view.entries[Param.C_PROBE].config(state='readonly', style='Readonly.TEntry')
         self.on_input_change(Param.C_PROBE)
 
     def _format_value(self, value, precision=3):
@@ -591,6 +651,11 @@ class AppController:
     def reset_application(self):
         """Resets all input fields to their default values."""
         self.model.reset()
+        # Reset to manual mode
+        self.view.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
+        self.update_from_xtal_preset()
+
+        # Set default values for manual mode
         for _, params in AppConfig.PARAM_MAP.items():
             for key_str, _, default_val, default_unit, _, _ in params:
                 key = Param[key_str]
@@ -606,6 +671,7 @@ class AppController:
         messagebox.showinfo(
             "About XTAL Validator",
             f"Validatore Oscillatore a Cristallo\nVersione: {AppConfig.APP_VERSION}\n\n"
+            "Creato da: Samuele Lorenzoni\n\n"
             "Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
             "basato sui parametri del datasheet e sulle misurazioni del circuito."
         )
