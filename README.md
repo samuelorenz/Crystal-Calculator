@@ -110,8 +110,3 @@ Assicurarsi che le dipendenze siano state installate e che si stiano usando i va
 - SLLA549 — TCAN455x Clock Optimization and Design Guidelines (Texas Instruments)
 
 ---
-
-Se vuoi, posso:
-- tradurre il README in inglese,
-- aggiungere esempi numerici o casi di prova,
-- preparare un file di esempio con valori tipici per testare il calcolo.
