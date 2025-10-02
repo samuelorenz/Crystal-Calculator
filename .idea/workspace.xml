@@ -33,7 +33,7 @@
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "aggiunta-dei-preset",
     "settings.editor.selected.configurable": "com.android.studio.ml.bot.mainConfigurable"
   }
 }]]></component>
@@ -59,7 +59,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/main.py</url>
-          <line>616</line>
+          <line>681</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
