@@ -345,7 +345,7 @@ class MainView(ttk.Frame):
                 row_idx += 1
 
     def _create_probe_selector(self, parent, row, column):
-        parent.columnconfigure(column, weight=0)  # Ensure this column does not expand excessively
+        parent.columnconfigure(column, weight=0)
         probe_selector_frame = ttk.Frame(parent, style="Input.TFrame")
         probe_selector_frame.grid(row=row, column=column, sticky='e', padx=10)
 
