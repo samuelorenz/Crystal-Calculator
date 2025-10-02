@@ -9,7 +9,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.2"
+    APP_VERSION = "3.3"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -272,7 +272,7 @@ class MainView(ttk.Frame):
     def _create_header(self, parent):
         header_frame = ttk.Frame(parent)
         header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
-        ttk.Label(header_frame, text="Validatore Oscillatore a Cristallo", style="Header.TLabel").pack()
+        ttk.Label(header_frame, text="Crystal Oscillator Validator", style="Header.TLabel").pack()
 
     def _create_preset_selector(self, parent):
         frame = ttk.Frame(parent, padding=(0, 0, 0, 15))
@@ -675,7 +675,7 @@ class AppController:
         """Saves all input parameters to a JSON file."""
         filepath = filedialog.asksaveasfilename(
             defaultextension=".xtal",
-            filetypes=[("XTAL Validator Files", "*.xtal"), ("All Files", "*.*")]
+            filetypes=[("Crystal Oscillator Validator Files", "*.xtal"), ("All Files", "*.*")]
         )
         if not filepath:
             return
@@ -704,7 +704,7 @@ class AppController:
     def load_work(self):
         """Loads input parameters from a JSON file."""
         filepath = filedialog.askopenfilename(
-            filetypes=[("XTAL Validator Files", "*.xtal"), ("All Files", "*.*")]
+            filetypes=[("Crystal Oscillator Validator Files", "*.xtal"), ("All Files", "*.*")]
         )
         if not filepath:
             return
@@ -735,8 +735,8 @@ class AppController:
 
     def show_about_dialog(self):
         messagebox.showinfo(
-            "About XTAL Validator",
-            f"Validatore Oscillatore a Cristallo\nVersione: {AppConfig.APP_VERSION}\n\n"
+            "About Crystal Oscillator Validator",
+            f"Crystal Oscillator Validator\nVersione: {AppConfig.APP_VERSION}\n\n"
             f"Creato da: Samuele Lorenzoni\n\n"
             "Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
             "basato sui parametri del datasheet e sulle misurazioni del circuito."
@@ -748,7 +748,7 @@ class AppController:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("XTAL Validator - Rev. Professional UI")
+    root.title("Crystal Oscillator Validator")
     root.geometry("1200x900")
     root.minsize(1000, 800)
     root.configure(background=AppConfig.COLOR_BACKGROUND)
