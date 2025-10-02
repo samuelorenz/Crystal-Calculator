@@ -38,35 +38,7 @@ sel
 ​
  ), la formula implementata è:
 
-C 
-L 
-eff
-​
- 
-​
- = 
-2
-C 
-L 
-sel
-​
- 
-​
- 
-​
- +2⋅(C 
-S 
-PCB
-​
- 
-​
- +C 
-S 
-PIN
-​
- 
-​
- )
+CL_eff = (CL_sel / 2) + 2 * (CS_PCB + CS_PIN)
 
 dove C 
 S 
@@ -94,49 +66,11 @@ crit
 ​
  ):
 
-g 
-m 
-crit
-​
- 
-​
- =4⋅(ESR 
-max
-​
- +R 
-ext
-​
- )⋅(2πf) 
-2
- ⋅(C 
-0
-​
- +C 
-L 
-eff
-​
- 
-​
- ) 
-2
- 
+gm_crit = 4 * (ESR_max + R_ext) * (2 * pi * f)^2 * (C0 + CL_eff)^2
 
 Per garantire robustezza rispetto a variazioni di temperatura, tensione e tolleranze dei componenti, si definisce il Margine di Guadagno (Gain Margin) come il rapporto adimensionale:
 
-GainMargin= 
-g 
-m 
-crit
-​
- 
-​
- 
-g 
-m
-​
- 
-​
- 
+GainMargin = gm / gm_crit
 
 Un valore di Gain Margin > 5 è considerato indice di un design robusto.
 
@@ -149,51 +83,9 @@ leg
 ​
  ):
 
-C 
-leg
-​
- =C 
-L 
-sel
-​
- 
-​
- +C 
-S 
-PCB
-​
- 
-​
- +C 
-S 
-PIN
-​
- 
-​
- +C 
-probe
-​
- 
+C_leg = CL_sel + CS_PCB + CS_PIN + C_probe
 
-DL= 
-2
-ESR 
-max
-​
- +R 
-ext
-​
- 
-​
- ⋅(π⋅f⋅C 
-leg
-​
- ⋅V 
-pp
-​
- ) 
-2
- 
+DL = ((ESR_max + R_ext) / 2) * (pi * f * C_leg * Vpp)^2
 
 Il valore calcolato deve essere inferiore al DL massimo specificato dal costruttore del cristallo.
 
