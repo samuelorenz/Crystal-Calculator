@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import messagebox, ttk, font
+from tkinter import messagebox, ttk, font, filedialog
+import json
 import numpy as np
 from enum import Enum
 
@@ -8,7 +9,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.1"
+    APP_VERSION = "3.2"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -469,6 +470,9 @@ class AppController:
         self.master.config(menu=menubar)
 
         file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Salva Lavoro", command=self.save_work)
+        file_menu.add_command(label="Carica Lavoro", command=self.load_work)
+        file_menu.add_separator()
         file_menu.add_command(label="Esci", command=self.exit_application)
         menubar.add_cascade(label="File", menu=file_menu)
 
@@ -667,11 +671,73 @@ class AppController:
         self.update_probe_capacitance()
         self.status_var.set("Pronto. I valori sono stati reimpostati.")
 
+    def save_work(self):
+        """Saves all input parameters to a JSON file."""
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".xtal",
+            filetypes=[("XTAL Validator Files", "*.xtal"), ("All Files", "*.*")]
+        )
+        if not filepath:
+            return
+
+        try:
+            data_to_save = {}
+            for key in Param:
+                data_to_save[key.name] = {
+                    "value": self.view.vars[key].get(),
+                    "unit": self.view.unit_combos[key].get()
+                }
+
+            data_to_save["__presets__"] = {
+                "xtal": self.view.xtal_combo.get(),
+                "probe": self.view.probe_combo.get()
+            }
+
+            with open(filepath, 'w') as f:
+                json.dump(data_to_save, f, indent=4)
+
+            self.status_var.set(f"Lavoro salvato in: {filepath}")
+        except Exception as e:
+            messagebox.showerror("Errore di Salvataggio", f"Impossibile salvare il file.\nErrore: {e}")
+            self.status_var.set("Salvataggio fallito.")
+
+    def load_work(self):
+        """Loads input parameters from a JSON file."""
+        filepath = filedialog.askopenfilename(
+            filetypes=[("XTAL Validator Files", "*.xtal"), ("All Files", "*.*")]
+        )
+        if not filepath:
+            return
+
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+
+            for key in Param:
+                if key.name in data:
+                    self.view.vars[key].set(data[key.name].get("value", ""))
+                    self.view.unit_combos[key].set(data[key.name].get("unit", ""))
+
+            if "__presets__" in data:
+                self.view.xtal_combo.set(data["__presets__"].get("xtal", AppConfig.DEFAULT_XTAL_NAME))
+                self.view.probe_combo.set(data["__presets__"].get("probe", AppConfig.DEFAULT_PROBE_NAME))
+
+            # Refresh UI state based on loaded presets
+            self.update_from_xtal_preset()
+            self.update_probe_capacitance()
+
+            self.status_var.set(f"Lavoro caricato da: {filepath}")
+
+        except Exception as e:
+            messagebox.showerror("Errore di Caricamento",
+                                 f"Impossibile caricare il file. Potrebbe essere corrotto o non valido.\nErrore: {e}")
+            self.status_var.set("Caricamento fallito.")
+
     def show_about_dialog(self):
         messagebox.showinfo(
             "About XTAL Validator",
             f"Validatore Oscillatore a Cristallo\nVersione: {AppConfig.APP_VERSION}\n\n"
-            "Creato da: Samuele Lorenzoni\n\n"
+            f"Creato da: Samuele Lorenzoni\n\n"
             "Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
             "basato sui parametri del datasheet e sulle misurazioni del circuito."
         )
