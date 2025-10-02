@@ -9,7 +9,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.4"
+    APP_VERSION = "3.5"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -201,7 +201,7 @@ class CrystalCircuitModel:
             # Drive Level calculation uses the total capacitance on the measured leg
             c_leg_for_dl = cl_sel + c_stray_single_leg + c_probe
             # Standard formula for Drive Level based on Vpp measured on one leg
-            drive_level = (total_esr / 2.0) * (np.pi * f * c_leg_for_dl * vpp_measured) ** 2
+            drive_level = (total_esr / 2.0) * (np.pi * f * c_leg_for_dl) ** 2 * vpp_measured ** 2
 
             dl_ratio = drive_level / dl_max if dl_max > 0 else float('inf')
 
