@@ -8,7 +8,7 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "2.5"
+    APP_VERSION = "2.6"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -83,11 +83,10 @@ class AppConfig:
     # Probe Data
     PROBE_MODELS = {
         "Manuale/Custom": 0.0,
-        "Sonda Attiva (Lo-Cap, <1pF)": 0.5,  # Value in pF
-        "Sonda Passiva Standard (10x)": 11.0,  # Value in pF
-        "Sonda Passiva Bassa Impedienza (1x)": 100.0,  # Value in pF
+        "Sonda Attiva (LeCroy ZS1500)": 0.9,  # Valore in pF
+        "Sonda Passiva (Tek P5050B)": 12.0,  # Valore in pF
     }
-    DEFAULT_PROBE_NAME = "Sonda Attiva (Lo-Cap, <1pF)"
+    DEFAULT_PROBE_NAME = "Sonda Attiva (LeCroy ZS1500)"
 
     # GUI Layout Definitions: (key, name, default_val, default_unit, unit_list, description)
     PARAM_MAP = {
@@ -463,7 +462,7 @@ class AppController:
                                                     font=AppConfig.FONT_VALUE_STALE)
             else:
                 self.view.output_labels[key].config(text="Dati modificati, ricalcolare.",
-                                                    foreground=AppConfig.COLOR_STALE_RESULT, font=AppConfig.FONT_STATUS)
+                                                    foreground=AppConfig.COLOR_STALE_RESULT, font=App.FONT_STATUS)
 
     def update_probe_capacitance(self, event=None):
         """Updates the C_probe entry based on combobox selection."""
