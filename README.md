@@ -1,4 +1,4 @@
-# Crystal Oscillator Validator
+[# Crystal Oscillator Validator
 
 **Versione:** 3.4  
 **Autore:** Samuele Lorenzoni
@@ -91,3 +91,4 @@ L'applicazione adotta il design pattern **Model-View-Controller (MVC)**:
 Installare la dipendenza necessaria tramite pip:
 ```bash
 pip install numpy
+](https://github.com/samuelorenz/Crystal-Calculator)
