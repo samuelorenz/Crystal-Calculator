@@ -10,58 +10,23 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "5.0"
+    APP_VERSION = "3.3"  # Versione aggiornata
     LIBRARY_FILENAME = "xtal_library.json"
-    # Icona dell'applicazione (formato base64 per non avere file esterni)
-    ICON_DATA = """
-    R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
-    AP9mM/9mmf9mZv9mM/9mAP8AzP8Amf8AZv8AM/8AAMz/zMz/mcz/Zsz/M8z/AMzMzMzMmcyZZszMM8zM
-    AMyZzMyZmcyZZsyZM8yZAMyZzDNmmcyZZsxmM8yZAMxmM8xmmcxmZsxmM8xmAMwAzMwAmcwAZswAM8wA
-    AJn/zJn/mZn/Zpn/M5n/AJnMzJnMmZmZZpnMM5nMAJmZzJmZmZmZZpmZM5mZAJmZzDNmmZmZZplmM5mZ
-    AJlmM5lmmZlmZplmM5lmAJkAAGb/zGb/mWb/Zmb/M2b/AGbMzGbMmWaZZmbMM2bMAGaZzGaZmWaZZmaZ
-    M2aZAGaZzDNmmWaZZh5mM2aZAGZmzGZmmWZmZmZmM2ZmAGYAzGYAmWYAZmYAM2YAAP//zP//mf//Zv//
-    M///AADMzADMmf/MZv/MM//MAD+ZzD+Zmf+ZZv+ZM/+ZAD9mMz9mmf9mZv9mMz9mAD8AzD8Amf8AZv8A
-    M/8AADD/zDD/mTD/ZzD/MzD/AACSzACSkyySWSwyMwySAACZzACZmSyZWSwyMyaZAACZzDNmkyyZWRxm
-    MyaZAACSWRxmMyaSAADMkyyMWRxmMyaSAAAAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYA
-    MyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMyYAMiYA
-    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    AAAAAAAAAAAAAAAAACH5BAEAAPwALAAAAAAgACAAAAj/AP8JHEiwoMGDCBMqXMiwocOHECNKnEixosWL
-    GDNq3Mixo8ePIEOKHEmypMmTKFOqXMmypcuXMGPKnEmzps2bOHPq3Mmzp8+fQIMKHUq0qNGjSJMqXcq0
-    qtOnBQRKnUq1qtWrWLNq3cq1q9evYMOKHUu2rNmzaNOqXcu2rdu3cOPKnUu3rt27ePPq3cu3r9+/gAML
-    Hky4sOHDiBMrXsy4sePHkCNLnky5suXLmDNr3sy5s+fPoEOLHk26tOnTqFOrXs26tevXsGPLnk27tu3b
-    uHPr3s27t+/fwIMLH068uPHjyJMrX868ufPn0KNLn069uvXr2LNr3869u/fv4MOL/x9Pvrz58+jTq1/P
-    vr379/Djy59Pv779+/jz69/Pv7///wAGKOCABBZo4IEIJqjgggw26OCDEEYo4YQUVmjhhRhmqOGGHHbo
-    4YcghijiiCSWaOKJKKao4oostujiizDGKOOMNNZo44045qjjjjz26OOPQA5JZJBEFmnkkUgmqeSSTDY5
-    pJE86mQlk1BGKeWUVFZp5ZVYZqnlllx26eWXYIYp5phklmnmmWimqeaabLbp5ptwxinnnHTWaeedeOap
-    55589unnn4AGKuighBZq6KGIJqrooow26uijkEYq6aSUtgIAAQAh+QQBAAD8ACwAAAAAIAAgAAAI/wD/
-    CRxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bN
-    mzhz6tzJs6fPn0CDCh1LdGjRgwgTKl3KtKnTp1CjSj0qCADVq1izat3KtavXr2DDih1LtqzZs2jTql3L
-    tq3bt3Djyp1Lt67du3jz6t3Lt6/fv4ADCx5MuLDhw4gTK17MuLHjx5AjS55MubLly5gza97MubPnz6BD
-    ix5NurTp06hTq17NurXr17Bjy55Nu7bt27hz697Nu7fv38CDCx9OvLjx48iTK1/OvLnz59CjS59Ovbr1
-    69iza9/Ovbv37+DDi/8fT768+fPo06tfz769+/fw48ufT7++/fv48+vfz7+///8ABijggAQWaOCBCCao
-    4IIMNujggxBGKOGEFFZo4YUYZqjhhhx26OGHIIYo4ogklmjiiSimqOKKLLbo4oswxijjjDTWaOONOOao
-    44489ujjj0AOSeSQRBZp5JFIJqnkkkw26eSTUEYp5ZRUVmnllVhmqeWWXHbp5ZdghinmmGSWaeaZaKap
-    5ppstunmm3DGKeecdNZp55145qnnnnz26eefgAYq6KCEFmrooYgmquiijDbq6KOQRirppJRWaumlmGaq
-    6aacdurpp6CGKuqopJZq6qmopqrqqqy26uqrsMYq66y01mrrrbjmquuuvPbq66/ABissAAA7
-    """
-    # Flat 2.0 / Material Design Color Palette
-    COLOR_BACKGROUND = "#ECEFF1"  # Light Grey
-    COLOR_FRAME_BG = "#FFFFFF"  # White
-    COLOR_ACCENT = "#03A9F4"  # Light Blue
-    COLOR_ACCENT_DARK = "#0288D1"  # Darker Blue (for hover)
-    COLOR_TEXT_PRIMARY = "#263238"  # Dark Grey
-    COLOR_TEXT_SECONDARY = "#607D8B"  # Lighter Grey
-    COLOR_OK = "#4CAF50"  # Green
-    COLOR_WARN = "#FFC107"  # Amber
-    COLOR_ERROR = "#F44336"  # Red
-    COLOR_SEPARATOR = "#CFD8DC"
-    COLOR_INVALID_ENTRY = "#FFEBEE"
-    COLOR_DISABLED_ENTRY = "#ECEFF1"
+
+    # Colors
+    COLOR_OK = "#1C8040"
+    COLOR_WARN = "#D9822B"
+    COLOR_ERROR = "#C93838"
+    COLOR_BACKGROUND = "#F0F0F0"
+    COLOR_FRAME_BG = "#FFFFFF"
+    COLOR_ACCENT = "#0078D4"
+    COLOR_ACCENT_DARK = "#005a9e"
+    COLOR_TEXT_PRIMARY = "#212121"
+    COLOR_TEXT_SECONDARY = "#757575"
+    COLOR_SEPARATOR = "#BDBDBD"
+    COLOR_STALE_RESULT = "#888888"
+    COLOR_INVALID_ENTRY = "#FFD2D2"
+    COLOR_DISABLED_ENTRY = "#F7F7F7"
 
     # Fonts
     FONT_DEFAULT = ('Segoe UI', 10)
@@ -74,6 +39,10 @@ class AppConfig:
     FONT_VALUE = ('Consolas', 12, 'bold')
     FONT_VALUE_STALE = ('Consolas', 12, 'normal')
     FONT_STATUS = ('Segoe UI', 11, 'bold')
+    # Font per la finestra delle formule
+    FONT_FORMULA_TITLE = ('Segoe UI', 12, 'bold')
+    FONT_FORMULA = ('Consolas', 11, 'bold')
+    FONT_FORMULA_DESC = ('Segoe UI', 10)
 
     # Unit Multipliers
     UNIT_MULTIPLIERS = {
@@ -91,32 +60,54 @@ class AppConfig:
         "Sonda Attiva (LeCroy ZS1500)": 0.9,  # Valore in pF
         "Sonda Passiva (Tek P5050B)": 12.0,  # Valore in pF
     }
-    DEFAULT_PROBE_NAME = "Sonda Attiva (LeCroy ZS1500)"
+    DEFAULT_PROBE_NAME = "Manuale/Custom"
 
+    # Crystal Presets
+    XTAL_PRESETS = {
+        "Manuale/Custom": {},
+        "ECS-250-10-36Q-AES-TR": {
+            "FREQ": ("25", "MHz"),
+            "C0": ("5", "pF"),
+            "ESR_MAX": ("60", "Ohm"),
+            "DL_MAX": ("100", "uW"),
+        },
+        "Abracon IXA20 (24MHz)": {
+            "FREQ": ("24", "MHz"),
+            "C0": ("5", "pF"),
+            "ESR_MAX": ("40", "Ohm"),
+            "DL_MAX": ("300", "uW"),
+        },
+        "MicroCrystal CM7V-T1A (32.768kHz)": {
+            "FREQ": ("32.768", "kHz"),
+            "C0": ("1.3", "pF"),
+            "ESR_MAX": ("70", "kOhm"),
+            "DL_MAX": ("1.0", "uW"),
+        }
+    }
     DEFAULT_XTAL_NAME = "Manuale/Custom"
 
-    # GUI Layout Definitions: (key, name, default_val, default_unit, unit_list, description)
+    # GUI Layout Definitions
     PARAM_MAP = {
         "Parametri del Cristallo (XTAL Datasheet)": [
-            ("FREQ", "Frequenza (F)", "30", "MHz", ['MHz', 'kHz', 'Hz'], "Frequenza operativa nominale."),
-            ("C0", "Capacità Shunt (C0)", "7.0", "pF", ['pF', 'nF', 'F'],
+            ("FREQ", "Frequenza (F)", "", "MHz", ['MHz', 'kHz', 'Hz'], "Frequenza operativa nominale."),
+            ("C0", "Capacità Shunt (C0)", "", "pF", ['pF', 'nF', 'F'],
              "Capacità del contenitore e degli elettrodi."),
-            ("ESR_MAX", "ESR Max", "30.0", "Ohm", ['Ohm', 'kOhm'], "Massima Resistenza Serie Equivalente."),
-            ("DL_MAX", "DL Max", "500", "uW", ['uW', 'mW', 'W'], "Massima potenza dissipabile."),
+            ("ESR_MAX", "ESR Max", "", "Ohm", ['Ohm', 'kOhm'], "Massima Resistenza Serie Equivalente."),
+            ("DL_MAX", "DL Max", "", "uW", ['uW', 'mW', 'W'], "Massima potenza dissipabile."),
         ],
         "Parametri Circuito e MCU": [
-            ("GM_MCU", "Gm MCU", "9.7", "mA/V", ['mA/V', 'A/V'], "Transconduttanza dell'amplificatore MCU."),
-            ("CL_SEL", "CL Esterna (CL_sel)", "22.0", "pF", ['pF', 'nF', 'F'],
+            ("GM_MCU", "Gm MCU", "", "mA/V", ['mA/V', 'A/V'], "Transconduttanza dell'amplificatore MCU."),
+            ("CL_SEL", "CL Esterna (CL_sel)", "", "pF", ['pF', 'nF', 'F'],
              "Valore condensatori esterni (CL1=CL2)."),
-            ("REXT_SEL", "Rext Selezionata", "0.0", "Ohm", ['Ohm', 'kOhm'],
+            ("REXT_SEL", "Rext Selezionata", "", "Ohm", ['Ohm', 'kOhm'],
              "Resistenza in serie per limitazione corrente."),
-            ("CS_PIN", "Cs PIN", "4.2", "pF", ['pF', 'nF', 'F'], "Capacità parassita del pin XTAL (per ramo)."),
-            ("CS_PCB", "Cs PCB", "3.6", "pF", ['pF', 'nF', 'F'], "Capacità parassita del layout PCB (per ramo)."),
+            ("CS_PIN", "Cs PIN", "", "pF", ['pF', 'nF', 'F'], "Capacità parassita del singolo pin MCU (un ramo)."),
+            ("CS_PCB", "Cs PCB", "", "pF", ['pF', 'nF', 'F'], "Capacità parassita della singola linea PCB (un ramo)."),
         ],
         "Misurazioni (Per calcolo DL effettivo)": [
-            ("VPP_MEASURED", "Vpp Misurata", "125", "mV", ['mV', 'V'],
+            ("VPP_MEASURED", "Vpp Misurata", "", "mV", ['mV', 'V'],
              "Tensione Picco-Picco misurata su OSC_IN (pin CL1)."),
-            ("C_PROBE", "Cap. Sonda (C_probe)", f"{PROBE_MODELS[DEFAULT_PROBE_NAME]}", "pF", ['pF', 'nF', 'F'],
+            ("C_PROBE", "Cap. Sonda (C_probe)", "", "pF", ['pF', 'nF', 'F'],
              "Capacità della sonda DSO utilizzata."),
         ]
     }
@@ -140,7 +131,8 @@ class CrystalCircuitModel:
         self.params = {param: 0.0 for param in Param}
         self.results = {
             'cl_eff': 0.0, 'gm_crit': 0.0, 'gain_margin': 0.0,
-            'rext_est': 0.0, 'drive_level': 0.0, 'dl_ratio': 0.0,
+            'x_cl': 0.0, 'drive_level': 0.0, 'dl_ratio': 0.0,
+            'c_tot_dl': 0.0
         }
 
     def set_param(self, key: Param, value: float):
@@ -154,7 +146,6 @@ class CrystalCircuitModel:
 
     def calculate(self):
         try:
-            # Get all params from the stored dictionary
             p = self.params
             f, c0, cs_pcb, cs_pin, cl_sel, esr_max, gm, dl_max, rext_sel, vpp_measured, c_probe = (
                 p[Param.FREQ], p[Param.C0], p[Param.CS_PCB], p[Param.CS_PIN], p[Param.CL_SEL],
@@ -164,32 +155,19 @@ class CrystalCircuitModel:
 
             total_esr = esr_max + rext_sel
 
-            # Stray capacitance for a single leg of the circuit
             c_stray_single_leg = cs_pcb + cs_pin
-
-            # Effective Load Capacitance (CL_eff) calculation based on AN2867.
-            # It's the series combination of the two legs (CL_sel + C_stray_single_leg).
             cl_eff = (cl_sel + c_stray_single_leg) / 2.0
-
-            # Critical Transconductance (Gm_crit)
             gm_crit = 4.0 * total_esr * (2 * np.pi * f) ** 2 * (c0 + cl_eff) ** 2
-
-            # Gain Margin
             gain_margin = gm / gm_crit if gm_crit > 0 else float('inf')
-
-            # Reactance of one load capacitor
-            rext_est = 1.0 / (2 * np.pi * f * cl_sel) if cl_sel > 0 else 0.0
-
-            # Drive Level calculation uses the total capacitance on the measured leg
-            c_leg_for_dl = cl_sel + c_stray_single_leg + c_probe
-            # Standard formula for Drive Level based on Vpp measured on one leg
-            drive_level = (total_esr / 2.0) * (np.pi * f * c_leg_for_dl) ** 2 * vpp_measured ** 2
-
+            x_cl = 1.0 / (2 * np.pi * f * cl_sel) if cl_sel > 0 else 0.0
+            c_tot_dl = cl_sel + c_stray_single_leg + c_probe
+            drive_level = (total_esr / 2.0) * (np.pi * f * c_tot_dl * vpp_measured) ** 2
             dl_ratio = drive_level / dl_max if dl_max > 0 else float('inf')
 
             self.results.update({
                 'cl_eff': cl_eff, 'gm_crit': gm_crit, 'gain_margin': gain_margin,
-                'rext_est': rext_est, 'drive_level': drive_level, 'dl_ratio': dl_ratio,
+                'x_cl': x_cl, 'drive_level': drive_level, 'dl_ratio': dl_ratio,
+                'c_tot_dl': c_tot_dl
             })
             return True, None
         except (ZeroDivisionError, ValueError) as e:
@@ -199,6 +177,90 @@ class CrystalCircuitModel:
 
 
 # --- VIEW (GUI Rendering) ---
+
+class FormulasView(tk.Toplevel):
+    """Finestra che mostra le formule di calcolo utilizzate."""
+
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("Formule di Calcolo")
+        self.geometry("750x650")
+        self.configure(background=AppConfig.COLOR_BACKGROUND)
+
+        # Frame principale con scrollbar
+        main_frame = ttk.Frame(self)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        canvas = tk.Canvas(main_frame, borderwidth=0, background=AppConfig.COLOR_FRAME_BG)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas, style="Input.TFrame")
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Contenuto della finestra
+        self._populate_formulas(scrollable_frame)
+
+    def _add_formula_block(self, parent, title, formula, description):
+        """Helper per aggiungere un blocco formattato di formula."""
+        frame = ttk.Frame(parent, padding=15, style="Input.TFrame")
+        frame.pack(fill="x", pady=(0, 10))
+
+        ttk.Label(frame, text=title, font=AppConfig.FONT_FORMULA_TITLE, style="Input.TLabel",
+                  foreground=AppConfig.COLOR_ACCENT_DARK).pack(anchor="w")
+        ttk.Separator(frame, orient="horizontal").pack(fill="x", pady=5)
+
+        ttk.Label(frame, text=formula, font=AppConfig.FONT_FORMULA, style="Input.TLabel", background="#E8F4FD").pack(
+            anchor="w", pady=5, padx=5)
+
+        desc_label = ttk.Label(frame, text=description, font=AppConfig.FONT_FORMULA_DESC, style="Input.TLabel",
+                               wraplength=650, justify="left")
+        desc_label.pack(anchor="w", pady=(10, 0))
+
+    def _populate_formulas(self, parent):
+        """Aggiunge tutte le formule alla finestra."""
+
+        title_1 = "1. Capacità di Carico Effettiva (CL,eff)"
+        formula_1 = "CL,eff = (CL,sel + Cs,pin + Cs,pcb) / 2"
+        desc_1 = (
+            "Rappresenta la capacità di carico totale vista dal quarzo. È calcolata come la serie delle capacità totali presenti su ciascuno dei due rami dell'oscillatore. "
+            "Questo valore è cruciale perché determina la frequenza di oscillazione finale.")
+        self._add_formula_block(parent, title_1, formula_1, desc_1)
+
+        title_2 = "2. Transconduttanza Critica (gm,crit)"
+        formula_2 = "gm,crit = 4 × Rtot × (2π × F)² × (C0 + CL,eff)²"
+        desc_2 = (
+            "È la minima transconduttanza (guadagno) che l'amplificatore dell'MCU deve possedere per avviare e sostenere l'oscillazione. "
+            "Rtot è la somma di ESR e Rext.")
+        self._add_formula_block(parent, title_2, formula_2, desc_2)
+
+        title_3 = "3. Margine di Guadagno (Gain Margin)"
+        formula_3 = "Gain Margin = gm,MCU / gm,crit"
+        desc_3 = (
+            "Indica la robustezza dell'oscillatore. È il rapporto tra il guadagno fornito dall'MCU e quello minimo richiesto per oscillare. Un valore ≥ 5 è considerato sicuro (come da AN2867).")
+        self._add_formula_block(parent, title_3, formula_3, desc_3)
+
+        title_4 = "4. Capacità Totale per Drive Level (Ctot)"
+        formula_4 = "Ctot = CL,sel + Cs,pin + Cs,pcb + Cprobe"
+        desc_4 = (
+            "È la somma di tutte le capacità parallelo presenti su un singolo ramo del circuito durante la misurazione con una sonda. "
+            "Questo valore è usato per calcolare la corrente che scorre nel ramo e, di conseguenza, la potenza dissipata dal quarzo.")
+        self._add_formula_block(parent, title_4, formula_4, desc_4)
+
+        title_5 = "5. Drive Level (DL)"
+        formula_5 = "DL = (Rtot / 2) × (π × F × Ctot × Vpp)²"
+        desc_5 = (
+            "Rappresenta la potenza dissipata dal quarzo. Questo valore deve essere inferiore al massimo specificato dal costruttore del quarzo per evitarne il danneggiamento. "
+            "Rtot è (ESR + Rext) e Vpp è la tensione picco-picco misurata sul ramo.")
+        self._add_formula_block(parent, title_5, formula_5, desc_5)
+
 
 class MainView(ttk.Frame):
     """Manages all GUI widgets and layout."""
@@ -389,9 +451,11 @@ class MainView(ttk.Frame):
         frame.grid(row=3, column=0, pady=25)
 
         frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=0)
+        frame.columnconfigure(2, weight=1)
 
         button_container = ttk.Frame(frame)
-        button_container.grid(row=0, column=0)
+        button_container.grid(row=0, column=1)
 
         calc_button = ttk.Button(button_container, text="Esegui Calcoli", command=self.controller.run_calculation,
                                  style="Calc.TButton")
@@ -422,7 +486,8 @@ class MainView(ttk.Frame):
             ("cl_eff", "Capacità di Carico Effettiva (CL_eff):", "pF"),
             ("gm_crit", "Transconduttanza Critica (Gm_crit):", "mA/V"),
             ("gain_margin", "Margine di Guadagno (S_f = Gm/Gm_crit):", "Ratio"),
-            ("rext_est", "Reattanza di Carico (X_CL):", "Ohm"),
+            ("x_cl", "Reattanza di Carico (X_CL):", "Ohm"),
+            ("c_tot_dl", "Capacità Totale per DL (Ctot):", "pF"),
             ("drive_level", "Drive Level Calcolato (DL):", "uW"),
         ]
         status_defs = [
@@ -456,7 +521,8 @@ class MainView(ttk.Frame):
             ttk.Label(bg_frame, text=text, font=AppConfig.FONT_BOLD, style="Input.TLabel").grid(row=row_idx, column=0,
                                                                                                 sticky="e", padx=5,
                                                                                                 pady=8)
-            self.output_labels[key] = ttk.Label(bg_frame, text="Eseguire Calcoli", font=AppConfig.FONT_STATUS,
+            self.output_labels[key] = ttk.Label(bg_frame, text="Inserire i dati e calcolare",
+                                                font=AppConfig.FONT_STATUS,
                                                 style="Input.TLabel", foreground=AppConfig.COLOR_TEXT_SECONDARY)
             self.output_labels[key].grid(row=row_idx, column=1, columnspan=3, sticky="w", padx=10)
             row_idx += 1
@@ -471,6 +537,7 @@ class AppController:
         self.master = master
         self.model = CrystalCircuitModel()
         self.xtal_library = {}
+        self._formulas_window = None
 
         self.master.rowconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
@@ -498,6 +565,8 @@ class AppController:
         self._create_status_bar()
         self._load_xtal_library()
 
+        self.status_var.set("Pronto. Inserire i valori per iniziare.")
+
     def _create_menu(self):
         menubar = tk.Menu(self.master)
         self.master.config(menu=menubar)
@@ -509,18 +578,31 @@ class AppController:
         file_menu.add_command(label="Esci", command=self.exit_application)
         menubar.add_cascade(label="File", menu=file_menu)
 
+        # --- MODIFICA: Aggiunto menu "Formule" ---
+        formulas_menu = tk.Menu(menubar, tearoff=0)
+        formulas_menu.add_command(label="Mostra Formule di Calcolo", command=self.show_formulas_window)
+        menubar.add_cascade(label="Formule", menu=formulas_menu)
+
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=self.show_about_dialog)
         menubar.add_cascade(label="Help", menu=help_menu)
 
+    # --- MODIFICA: Aggiunta nuova funzione per mostrare la finestra delle formule ---
+    def show_formulas_window(self):
+        """Crea e mostra la finestra con le formule."""
+        if self._formulas_window is None or not self._formulas_window.winfo_exists():
+            self._formulas_window = FormulasView(self.master)
+        self._formulas_window.lift()
+        self._formulas_window.focus()
+
     def _create_status_bar(self):
-        self.status_var = tk.StringVar(value="Pronto. Inserire i parametri e avviare il calcolo.")
+        self.status_var = tk.StringVar()
         status_bar_frame = ttk.Frame(self.master, relief="sunken", style="TFrame")
         status_bar_frame.grid(row=1, column=0, sticky="ew")
         status_bar = ttk.Label(status_bar_frame, textvariable=self.status_var, anchor=tk.W, padding=5)
         status_bar.pack(fill=tk.X)
 
-    def on_input_change(self, param_key):
+    def on_input_change(self, param_key=None):
         """Called when any input StringVar changes."""
         self.status_var.set("I parametri sono stati modificati. Eseguire nuovamente il calcolo.")
         for key in self.view.output_labels:
@@ -556,6 +638,15 @@ class AppController:
             messagebox.showerror("Errore Libreria", f"Impossibile salvare la libreria dei quarzi.\n{e}")
 
     def save_to_library(self):
+        try:
+            if not self.view.vars[Param.FREQ].get().strip():
+                messagebox.showwarning("Dati Mancanti",
+                                       "Inserire almeno la frequenza del quarzo prima di salvare un preset.")
+                return
+        except (ValueError, TypeError):
+            messagebox.showwarning("Dati non validi", "I dati inseriti per il quarzo non sono validi.")
+            return
+
         new_name = simpledialog.askstring("Salva Preset Quarzo", "Inserisci un nome per il preset:", parent=self.master)
         if not new_name or not new_name.strip():
             return
@@ -574,7 +665,7 @@ class AppController:
         self._save_xtal_library()
         self.view.update_xtal_library_list(list(self.xtal_library.keys()))
         self.view.xtal_combo.set(new_name)
-        self.load_from_library()  # Update UI state after saving
+        self.load_from_library()
         messagebox.showinfo("Libreria Aggiornata", f"Il preset '{new_name}' è stato salvato con successo.")
 
     def delete_from_library(self):
@@ -591,46 +682,44 @@ class AppController:
             self.status_var.set(f"Preset '{selected_name}' eliminato.")
 
     def load_from_library(self, event=None):
-        """Updates input fields based on the selected crystal from the library."""
         selected_xtal = self.view.xtal_combo.get()
         preset = self.xtal_library.get(selected_xtal, {})
 
-        preset_params = [Param.FREQ, Param.C0, Param.ESR_MAX, Param.DL_MAX]
-        is_custom = selected_xtal == AppConfig.DEFAULT_XTAL_NAME
+        preset_params_keys = [Param.FREQ, Param.C0, Param.ESR_MAX, Param.DL_MAX]
+        for key in preset_params_keys:
+            self.view.vars[key].set("")
 
+        for key_str, (val, unit) in preset.items():
+            key = Param[key_str]
+            self.view.vars[key].set(val)
+            self.view.unit_combos[key].set(unit)
+
+        is_custom = selected_xtal == AppConfig.DEFAULT_XTAL_NAME
         self.view.delete_xtal_button.config(state='disabled' if is_custom else 'normal')
 
         for key in Param:
-            is_preset_param = key in preset_params
-
-            if is_preset_param and key.name in preset:
-                val, unit = preset[key.name]
-                self.view.vars[key].set(val)
-                self.view.unit_combos[key].set(unit)
-
+            is_preset_param = key in preset_params_keys
             entry_state = 'normal' if is_custom or not is_preset_param else 'readonly'
             combo_state = 'readonly' if is_custom or not is_preset_param else 'disabled'
-
             self.view.entries[key].config(state=entry_state)
             self.view.unit_combos[key].config(state=combo_state)
 
-        self.on_input_change(None)
+        self.on_input_change()
 
     def update_probe_capacitance(self, event=None):
-        """Updates the C_probe entry based on combobox selection."""
         selected_name = self.view.probe_combo.get()
 
         if selected_name == "Manuale/Custom":
             self.view.entries[Param.C_PROBE].config(state='normal')
+            self.view.vars[Param.C_PROBE].set("")
         elif selected_name in AppConfig.PROBE_MODELS:
             probe_cap_val = AppConfig.PROBE_MODELS[selected_name]
             self.view.vars[Param.C_PROBE].set(f"{probe_cap_val}")
             self.view.unit_combos[Param.C_PROBE].set("pF")
             self.view.entries[Param.C_PROBE].config(state='readonly')
-        self.on_input_change(Param.C_PROBE)
+        self.on_input_change()
 
     def _format_value(self, value, precision=3):
-        """Formats a number for display, using scientific notation for large/small values."""
         if value is None or not np.isfinite(value):
             return "N/A"
         if value == 0:
@@ -643,7 +732,6 @@ class AppController:
             return f"{value:.{precision}f}"
 
     def run_calculation(self):
-        """Gathers data, triggers model calculation, and updates the view."""
         for entry in self.view.entries.values():
             if entry.cget('state') != 'readonly':
                 entry.configure(style="TEntry")
@@ -662,6 +750,11 @@ class AppController:
         except (ValueError, TypeError) as e:
             err_msg = str(e)
             invalid_key = None
+            if "could not convert string to float" in err_msg:
+                messagebox.showerror("Errore di Input", f"Valore non numerico inserito. Controllare i campi.")
+                self.status_var.set(f"Errore: Valore non numerico.")
+                return
+
             for p_key in Param:
                 if p_key.name in err_msg:
                     invalid_key = p_key
@@ -687,10 +780,12 @@ class AppController:
         self.view.output_labels["cl_eff"].config(text=self._format_value(results['cl_eff'] * 1e12))
         self.view.output_labels["gm_crit"].config(text=self._format_value(results['gm_crit'] * 1e3))
         self.view.output_labels["gain_margin"].config(text=self._format_value(results['gain_margin']))
-        self.view.output_labels["rext_est"].config(text=self._format_value(results['rext_est']))
+        self.view.output_labels["x_cl"].config(text=self._format_value(results['x_cl']))
         self.view.output_labels["drive_level"].config(text=self._format_value(results['drive_level'] * 1e6))
+        self.view.output_labels["c_tot_dl"].config(text=self._format_value(results['c_tot_dl'] * 1e12))
 
-        for key in ["cl_eff", "gm_crit", "gain_margin", "rext_est", "drive_level"]:
+        keys_to_style = ["cl_eff", "gm_crit", "gain_margin", "x_cl", "drive_level", "c_tot_dl"]
+        for key in keys_to_style:
             self.view.output_labels[key].config(font=AppConfig.FONT_VALUE, foreground=AppConfig.COLOR_TEXT_PRIMARY)
 
         self._update_status_labels()
@@ -704,7 +799,6 @@ class AppController:
         drive_level = results['drive_level']
         dl_ratio = results['dl_ratio']
 
-        # --- Gm/Gm_crit Status ---
         gm_label = self.view.output_labels["gm_crit_status"]
         gm_f = self._format_value(gm_mcu * 1e3, 1)
         gmc_f = self._format_value(gm_crit * 1e3, 1)
@@ -716,7 +810,6 @@ class AppController:
             gm_color = AppConfig.COLOR_OK
         gm_label.config(text=gm_text, foreground=gm_color)
 
-        # --- Gain Margin Status ---
         margin_label = self.view.output_labels["gain_margin_status"]
         threshold = self.model.GM_MARGIN_THRESHOLD
         gm_margin_f = self._format_value(gain_margin, 2)
@@ -731,7 +824,6 @@ class AppController:
             margin_color = AppConfig.COLOR_ERROR
         margin_label.config(text=margin_text, foreground=margin_color)
 
-        # --- Drive Level Status ---
         dl_label = self.view.output_labels["dl_status"]
         dl_f = self._format_value(drive_level * 1e6, 1)
         dl_max_f = self._format_value(dl_max * 1e6, 1)
@@ -748,25 +840,28 @@ class AppController:
         dl_label.config(text=dl_text, foreground=dl_color)
 
     def reset_application(self):
-        """Resets all input fields to their default values."""
+        """Resets all input fields to be empty."""
         self.model.reset()
 
+        for key, var in self.view.vars.items():
+            var.set("")
+
         self.view.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
-        self.load_from_library()
-
-        for _, params in AppConfig.PARAM_MAP.items():
-            for key_str, _, default_val, default_unit, _, _ in params:
-                key = Param[key_str]
-                if key in self.view.vars:
-                    self.view.vars[key].set(default_val)
-                    self.view.unit_combos[key].set(default_unit)
-
         self.view.probe_combo.set(AppConfig.DEFAULT_PROBE_NAME)
+
+        # Svuota i campi dopo aver impostato i combo box
+        self.load_from_library()
         self.update_probe_capacitance()
+
         self.status_var.set("Pronto. I valori sono stati reimpostati.")
+        self.on_input_change()
+        for key, label in self.view.output_labels.items():
+            if '_status' in key:
+                label.config(text="Inserire i dati e calcolare")
+            else:
+                label.config(text="N/A")
 
     def save_work(self):
-        """Saves all input parameters to a JSON file."""
         filepath = filedialog.asksaveasfilename(
             defaultextension=".xtal",
             filetypes=[("Crystal Validator Work Files", "*.xtal"), ("All Files", "*.*")]
@@ -796,7 +891,6 @@ class AppController:
             self.status_var.set("Salvataggio fallito.")
 
     def load_work(self):
-        """Loads input parameters from a JSON file."""
         filepath = filedialog.askopenfilename(
             filetypes=[("Crystal Validator Work Files", "*.xtal"), ("All Files", "*.*")]
         )
@@ -810,7 +904,7 @@ class AppController:
             for key in Param:
                 if key.name in data:
                     self.view.vars[key].set(data[key.name].get("value", ""))
-                    self.view.unit_combos[key].set(data[key.name].get("unit", ""))
+                    self.view.unit_combos[key].set(data[key.name].get("unit", "pF"))
 
             if "__presets__" in data:
                 self.view.xtal_combo.set(data["__presets__"].get("xtal", AppConfig.DEFAULT_XTAL_NAME))
@@ -829,8 +923,7 @@ class AppController:
         messagebox.showinfo(
             "About Crystal Oscillator Validator",
             f"Crystal Oscillator Validator\nVersione: {AppConfig.APP_VERSION}\n\n"
-            f"Creato da: Samuele Lorenzoni\n\n"
-            "Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
+            f"Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
             "basato sui parametri del datasheet e sulle misurazioni del circuito."
         )
 
@@ -841,17 +934,10 @@ class AppController:
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Crystal Oscillator Validator")
-    root.geometry("1200x900")
-    root.minsize(1000, 800)
+    root.geometry("1200x950")
+    root.minsize(1000, 850)
     root.configure(background=AppConfig.COLOR_BACKGROUND)
-
-    try:
-        icon = tk.PhotoImage(data=AppConfig.ICON_DATA)
-        root.iconphoto(True, icon)
-    except tk.TclError:
-        print("Non è stato possibile caricare l'icona dell'applicazione.")
 
     app = AppController(root)
 
     root.mainloop()
-
