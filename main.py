@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox, ttk, font, filedialog
+from tkinter import messagebox, ttk, font, filedialog, simpledialog
 import json
+import os
 import numpy as np
 from enum import Enum
 
@@ -9,7 +10,8 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.5"
+    APP_VERSION = "5.0"
+    LIBRARY_FILENAME = "xtal_library.json"
     # Icona dell'applicazione (formato base64 per non avere file esterni)
     ICON_DATA = """
     R0lGODlhIAAgAPcAMf//////zP//mf//Zv//M///AP/MzP/Mmf/MZv/MM//MAP+ZzP+Zmf+ZZv+ZM/+Z
@@ -47,17 +49,19 @@ class AppConfig:
     5ppstunmm3DGKeecdNZp55145qnnnnz26eefgAYq6KCEFmrooYgmquiijDbq6KOQRirppJRWaumlmGaq
     6aacdurpp6CGKuqopJZq6qmopqrqqqy26uqrsMYq66y01mrrrbjmquuuvPbq66/ABissAAA7
     """
-    # Colors
-    COLOR_OK = "#1C8040"
-    COLOR_WARN = "#D9822B"
-    COLOR_ERROR = "#C93838"
-    COLOR_BACKGROUND = "#F0F0F0"
-    COLOR_FRAME_BG = "#FFFFFF"
-    COLOR_ACCENT = "#0078D4"
-    COLOR_ACCENT_DARK = "#005a9e"
-    COLOR_STALE_RESULT = "#888888"
-    COLOR_INVALID_ENTRY = "#FFD2D2"
-    COLOR_DISABLED_ENTRY = "#F7F7F7"
+    # Flat 2.0 / Material Design Color Palette
+    COLOR_BACKGROUND = "#ECEFF1"  # Light Grey
+    COLOR_FRAME_BG = "#FFFFFF"  # White
+    COLOR_ACCENT = "#03A9F4"  # Light Blue
+    COLOR_ACCENT_DARK = "#0288D1"  # Darker Blue (for hover)
+    COLOR_TEXT_PRIMARY = "#263238"  # Dark Grey
+    COLOR_TEXT_SECONDARY = "#607D8B"  # Lighter Grey
+    COLOR_OK = "#4CAF50"  # Green
+    COLOR_WARN = "#FFC107"  # Amber
+    COLOR_ERROR = "#F44336"  # Red
+    COLOR_SEPARATOR = "#CFD8DC"
+    COLOR_INVALID_ENTRY = "#FFEBEE"
+    COLOR_DISABLED_ENTRY = "#ECEFF1"
 
     # Fonts
     FONT_DEFAULT = ('Segoe UI', 10)
@@ -89,28 +93,6 @@ class AppConfig:
     }
     DEFAULT_PROBE_NAME = "Sonda Attiva (LeCroy ZS1500)"
 
-    # Crystal Presets
-    XTAL_PRESETS = {
-        "Manuale/Custom": {},
-        "ECS-250-10-36Q-AES-TR": {
-            "FREQ": ("25", "MHz"),
-            "C0": ("5", "pF"),
-            "ESR_MAX": ("60", "Ohm"),
-            "DL_MAX": ("100", "uW"),
-        },
-        "Abracon IXA20 (24MHz)": {
-            "FREQ": ("24", "MHz"),
-            "C0": ("5", "pF"),
-            "ESR_MAX": ("40", "Ohm"),
-            "DL_MAX": ("300", "uW"),
-        },
-        "MicroCrystal CM7V-T1A (32.768kHz)": {
-            "FREQ": ("32.768", "kHz"),
-            "C0": ("1.3", "pF"),
-            "ESR_MAX": ("70", "kOhm"),
-            "DL_MAX": ("1.0", "uW"),
-        }
-    }
     DEFAULT_XTAL_NAME = "Manuale/Custom"
 
     # GUI Layout Definitions: (key, name, default_val, default_unit, unit_list, description)
@@ -231,6 +213,7 @@ class MainView(ttk.Frame):
         self.output_labels = {}
         self.probe_combo = None
         self.xtal_combo = None
+        self.delete_xtal_button = None
 
         self._configure_styles()
         self._create_widgets()
@@ -240,59 +223,104 @@ class MainView(ttk.Frame):
         style.theme_use('clam')
 
         cfg = AppConfig
+
+        # General widget configurations
         style.configure("TFrame", background=cfg.COLOR_BACKGROUND)
         style.configure("Input.TFrame", background=cfg.COLOR_FRAME_BG)
-        style.configure("TLabel", font=cfg.FONT_DEFAULT, background=cfg.COLOR_BACKGROUND)
-        style.configure("Input.TLabel", background=cfg.COLOR_FRAME_BG)
+        style.configure("TLabel", font=cfg.FONT_DEFAULT, background=cfg.COLOR_BACKGROUND,
+                        foreground=cfg.COLOR_TEXT_PRIMARY)
+        style.configure("Input.TLabel", background=cfg.COLOR_FRAME_BG, foreground=cfg.COLOR_TEXT_PRIMARY)
         style.configure("Header.TLabel", font=cfg.FONT_MAIN_TITLE, background=cfg.COLOR_BACKGROUND,
-                        foreground=cfg.COLOR_ACCENT_DARK)
+                        foreground=cfg.COLOR_TEXT_PRIMARY)
         style.configure("Group.TLabel", font=cfg.FONT_GROUP_TITLE, background=cfg.COLOR_BACKGROUND,
-                        foreground=cfg.COLOR_ACCENT_DARK)
-        style.configure("TEntry", fieldbackground=cfg.COLOR_FRAME_BG, font=('Courier New', 10))
-        style.map("Invalid.TEntry", fieldbackground=[("!disabled", cfg.COLOR_INVALID_ENTRY)])
-        style.configure("Readonly.TEntry", fieldbackground=cfg.COLOR_DISABLED_ENTRY)
-        style.configure("Calc.TButton", font=cfg.FONT_HEADER, padding=10, background=cfg.COLOR_ACCENT,
-                        foreground='white')
-        style.map("Calc.TButton", background=[('active', cfg.COLOR_ACCENT_DARK)])
-        style.configure("Reset.TButton", font=cfg.FONT_DEFAULT, padding=5)
-        style.configure("Output.TLabelframe", background=cfg.COLOR_FRAME_BG, borderwidth=1, relief='solid',
-                        font=cfg.FONT_TITLE)
+                        foreground=cfg.COLOR_TEXT_PRIMARY)
+        style.configure('TSeparator', background=cfg.COLOR_SEPARATOR)
+
+        # Entry fields
+        style.configure("TEntry",
+                        fieldbackground=cfg.COLOR_FRAME_BG,
+                        font=('Segoe UI', 10),
+                        borderwidth=0,
+                        relief='flat',
+                        padding=5)
+        style.map("TEntry",
+                  fieldbackground=[('readonly', cfg.COLOR_DISABLED_ENTRY)],
+                  foreground=[('readonly', cfg.COLOR_TEXT_SECONDARY)])
+        style.configure("Invalid.TEntry", fieldbackground=cfg.COLOR_INVALID_ENTRY)
+
+        # Buttons
+        style.configure("Calc.TButton",
+                        font=cfg.FONT_HEADER,
+                        padding=(20, 10),
+                        background=cfg.COLOR_ACCENT,
+                        foreground='white',
+                        borderwidth=0,
+                        relief='flat')
+        style.map("Calc.TButton",
+                  background=[('active', cfg.COLOR_ACCENT_DARK)])
+
+        style.configure("Secondary.TButton",
+                        font=cfg.FONT_DEFAULT,
+                        padding=(10, 5),
+                        background=cfg.COLOR_FRAME_BG,
+                        foreground=cfg.COLOR_TEXT_PRIMARY,
+                        borderwidth=1,
+                        bordercolor=cfg.COLOR_SEPARATOR,
+                        relief='flat')
+        style.map("Secondary.TButton",
+                  background=[('active', cfg.COLOR_BACKGROUND)])
+
+        style.configure("Delete.TButton", foreground=cfg.COLOR_ERROR)
+        style.map("Delete.TButton",
+                  background=[('active', '#FFEBEE')],
+                  bordercolor=[('active', cfg.COLOR_ERROR)])
 
     def _create_widgets(self):
-        self.pack(fill="both", expand=True, padx=10, pady=10)
+        self.pack(fill="both", expand=True)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(4, weight=1)
 
         self._create_header(self)
-        self._create_preset_selector(self)
+        self._create_library_controls(self)
         self._create_input_frame(self)
         self._create_control_frame(self)
         self._create_output_frame(self)
 
     def _create_header(self, parent):
-        header_frame = ttk.Frame(parent)
-        header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
+        header_frame = ttk.Frame(parent, padding=(10, 10, 10, 20))
+        header_frame.grid(row=0, column=0, sticky="ew")
         ttk.Label(header_frame, text="Crystal Oscillator Validator", style="Header.TLabel").pack()
 
-    def _create_preset_selector(self, parent):
-        frame = ttk.Frame(parent, padding=(0, 0, 0, 15))
+    def _create_library_controls(self, parent):
+        frame = ttk.Frame(parent, padding=(10, 0, 10, 20))
         frame.grid(row=1, column=0, sticky="ew")
 
-        ttk.Label(frame, text="Preset Quarzo:", font=AppConfig.FONT_BOLD).pack(side="left", padx=(0, 10))
+        ttk.Label(frame, text="Libreria Quarzi:", font=AppConfig.FONT_BOLD).pack(side="left", padx=(0, 10))
 
-        self.xtal_combo = ttk.Combobox(frame, values=list(AppConfig.XTAL_PRESETS.keys()), state='readonly', width=30)
+        self.xtal_combo = ttk.Combobox(frame, state='readonly', width=30)
         self.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
-        self.xtal_combo.bind("<<ComboboxSelected>>", self.controller.update_from_xtal_preset)
+        self.xtal_combo.bind("<<ComboboxSelected>>", self.controller.load_from_library)
         self.xtal_combo.pack(side="left")
 
+        save_button = ttk.Button(frame, text="Salva Quarzo", style="Secondary.TButton",
+                                 command=self.controller.save_to_library)
+        save_button.pack(side="left", padx=(10, 0))
+
+        self.delete_xtal_button = ttk.Button(frame, text="Elimina", style="Delete.TButton",
+                                             command=self.controller.delete_from_library, state="disabled")
+        self.delete_xtal_button.pack(side="left", padx=(5, 0))
+
+    def update_xtal_library_list(self, library_keys):
+        self.xtal_combo['values'] = library_keys
+
     def _create_input_frame(self, parent):
-        frame = ttk.Frame(parent)
+        frame = ttk.Frame(parent, padding=(10, 0))
         frame.grid(row=2, column=0, sticky="ew")
         frame.columnconfigure(0, weight=1)
         self._populate_input_fields(frame)
 
     def _populate_input_fields(self, parent_frame):
-        input_container = ttk.Frame(parent_frame, style="TFrame")
+        input_container = ttk.Frame(parent_frame)
         input_container.pack(fill=tk.BOTH, expand=True)
 
         row_idx = 0
@@ -302,7 +330,7 @@ class MainView(ttk.Frame):
                 row_idx += 1
 
             title = ttk.Label(input_container, text=group_title, style="Group.TLabel")
-            title.grid(row=row_idx, column=0, sticky='w', pady=(0, 5))
+            title.grid(row=row_idx, column=0, sticky='w', pady=(0, 10))
             row_idx += 1
 
             for _, (key_str, name, default_val, default_unit, units, desc) in enumerate(params):
@@ -312,17 +340,17 @@ class MainView(ttk.Frame):
                 self.vars[key] = var
 
                 bg_frame = tk.Frame(input_container, background=AppConfig.COLOR_FRAME_BG)
-                bg_frame.grid(row=row_idx, column=0, sticky='nsew', ipady=2)
+                bg_frame.grid(row=row_idx, column=0, sticky='nsew')
 
-                bg_frame.columnconfigure(0, minsize=320, weight=0)  # Label
-                bg_frame.columnconfigure(1, weight=1)  # Input Field Frame
-                bg_frame.columnconfigure(2, weight=2)  # Description
+                bg_frame.columnconfigure(0, minsize=320, weight=0)
+                bg_frame.columnconfigure(1, weight=1)
+                bg_frame.columnconfigure(2, weight=2)
 
                 label = ttk.Label(bg_frame, text=f"{name}:", font=AppConfig.FONT_BOLD, style="Input.TLabel")
-                label.grid(row=0, column=0, sticky="e", padx=(0, 10))
+                label.grid(row=0, column=0, sticky="e", padx=(0, 10), pady=5)
 
                 input_field_frame = ttk.Frame(bg_frame, style="Input.TFrame")
-                input_field_frame.grid(row=0, column=1, sticky='ew')
+                input_field_frame.grid(row=0, column=1, sticky='ew', pady=5)
                 input_field_frame.columnconfigure(0, weight=1)
 
                 entry = ttk.Entry(input_field_frame, textvariable=var, width=15, justify='right')
@@ -335,9 +363,9 @@ class MainView(ttk.Frame):
                 unit_combo.grid(row=0, column=1, sticky='w', padx=5)
                 self.unit_combos[key] = unit_combo
 
-                desc_label = ttk.Label(bg_frame, text=desc, foreground='gray', wraplength=400,
+                desc_label = ttk.Label(bg_frame, text=desc, foreground=AppConfig.COLOR_TEXT_SECONDARY, wraplength=400,
                                        font=AppConfig.FONT_ITALIC, style="Input.TLabel")
-                desc_label.grid(row=0, column=2, sticky="w", padx=10)
+                desc_label.grid(row=0, column=2, sticky="w", padx=10, pady=5)
 
                 if key == Param.C_PROBE:
                     self._create_probe_selector(bg_frame, row=0, column=3)
@@ -358,7 +386,7 @@ class MainView(ttk.Frame):
 
     def _create_control_frame(self, parent):
         frame = ttk.Frame(parent, padding="10 0 10 0")
-        frame.grid(row=3, column=0, pady=20)
+        frame.grid(row=3, column=0, pady=25)
 
         frame.columnconfigure(0, weight=1)
 
@@ -370,18 +398,25 @@ class MainView(ttk.Frame):
         calc_button.pack(side='left', padx=(0, 5))
 
         reset_button = ttk.Button(button_container, text="Reset Valori", command=self.controller.reset_application,
-                                  style="Reset.TButton")
+                                  style="Secondary.TButton")
         reset_button.pack(side='left', padx=(5, 0))
 
     def _create_output_frame(self, parent):
-        frame = ttk.LabelFrame(parent, text="REPORT TECNICO: PARAMETRI DERIVATI", style="Output.TLabelframe",
-                               padding="15")
+        frame = ttk.Frame(parent, padding=(10, 0))
         frame.grid(row=4, column=0, sticky="nsew")
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
 
-        frame.columnconfigure(0, minsize=320, weight=0)
-        frame.columnconfigure(1, minsize=120, weight=0)
-        frame.columnconfigure(2, minsize=50, weight=0)
-        frame.columnconfigure(3, weight=1)
+        bg_frame = ttk.Frame(frame, style='Input.TFrame', padding=20)
+        bg_frame.grid(sticky='nsew')
+        bg_frame.columnconfigure(0, minsize=320, weight=0)
+        bg_frame.columnconfigure(1, minsize=120, weight=0)
+        bg_frame.columnconfigure(2, minsize=50, weight=0)
+        bg_frame.columnconfigure(3, weight=1)
+
+        title_label = ttk.Label(bg_frame, text="REPORT TECNICO: PARAMETRI DERIVATI", font=AppConfig.FONT_GROUP_TITLE,
+                                foreground=AppConfig.COLOR_TEXT_PRIMARY, style='Input.TLabel')
+        title_label.grid(row=0, column=0, columnspan=4, sticky='w', pady=(0, 20))
 
         output_defs = [
             ("cl_eff", "Capacità di Carico Effettiva (CL_eff):", "pF"),
@@ -396,30 +431,33 @@ class MainView(ttk.Frame):
             ("dl_status", "Drive Level (Affidabilità):"),
         ]
 
-        row_idx = 0
+        row_idx = 1
         for key, text, unit in output_defs:
-            ttk.Label(frame, text=text, font=AppConfig.FONT_BOLD, style="Input.TLabel").grid(row=row_idx, column=0,
-                                                                                             sticky="e", padx=5, pady=6)
-            self.output_labels[key] = ttk.Label(frame, text="N/A", font=AppConfig.FONT_VALUE, anchor='e',
-                                                foreground='#333', style="Input.TLabel")
+            ttk.Label(bg_frame, text=text, font=AppConfig.FONT_BOLD, style="Input.TLabel").grid(row=row_idx, column=0,
+                                                                                                sticky="e", padx=5,
+                                                                                                pady=6)
+            self.output_labels[key] = ttk.Label(bg_frame, text="N/A", font=AppConfig.FONT_VALUE, anchor='e',
+                                                foreground=AppConfig.COLOR_TEXT_SECONDARY, style="Input.TLabel")
             self.output_labels[key].grid(row=row_idx, column=1, sticky="e", padx=5)
-            ttk.Label(frame, text=f"[{unit}]", foreground='darkgray', style="Input.TLabel").grid(row=row_idx, column=2,
-                                                                                                 sticky="w")
+            ttk.Label(bg_frame, text=f"[{unit}]", foreground=AppConfig.COLOR_TEXT_SECONDARY, style="Input.TLabel").grid(
+                row=row_idx, column=2, sticky="w")
             row_idx += 1
 
-        ttk.Separator(frame, orient='horizontal').grid(row=row_idx, column=0, columnspan=4, sticky="ew", pady=15)
+        ttk.Separator(bg_frame).grid(row=row_idx, column=0, columnspan=4, sticky="ew", pady=15)
         row_idx += 1
 
-        ttk.Label(frame, text="STATO DI VALIDAZIONE FINALE", font=AppConfig.FONT_HEADER,
-                  foreground=AppConfig.COLOR_ACCENT, style="Input.TLabel").grid(row=row_idx, column=0, columnspan=4,
-                                                                                sticky="w", pady=(5, 10))
+        ttk.Label(bg_frame, text="STATO DI VALIDAZIONE FINALE", font=AppConfig.FONT_HEADER,
+                  foreground=AppConfig.COLOR_ACCENT_DARK, style="Input.TLabel").grid(row=row_idx, column=0,
+                                                                                     columnspan=4, sticky="w",
+                                                                                     pady=(5, 10))
         row_idx += 1
 
         for key, text in status_defs:
-            ttk.Label(frame, text=text, font=AppConfig.FONT_BOLD, style="Input.TLabel").grid(row=row_idx, column=0,
-                                                                                             sticky="e", padx=5, pady=8)
-            self.output_labels[key] = ttk.Label(frame, text="Eseguire Calcoli", font=AppConfig.FONT_STATUS,
-                                                style="Input.TLabel")
+            ttk.Label(bg_frame, text=text, font=AppConfig.FONT_BOLD, style="Input.TLabel").grid(row=row_idx, column=0,
+                                                                                                sticky="e", padx=5,
+                                                                                                pady=8)
+            self.output_labels[key] = ttk.Label(bg_frame, text="Eseguire Calcoli", font=AppConfig.FONT_STATUS,
+                                                style="Input.TLabel", foreground=AppConfig.COLOR_TEXT_SECONDARY)
             self.output_labels[key].grid(row=row_idx, column=1, columnspan=3, sticky="w", padx=10)
             row_idx += 1
 
@@ -432,13 +470,13 @@ class AppController:
     def __init__(self, master):
         self.master = master
         self.model = CrystalCircuitModel()
+        self.xtal_library = {}
 
         self.master.rowconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
 
         self._create_menu()
 
-        # --- Main Scrolling Canvas Setup ---
         main_frame = ttk.Frame(master)
         main_frame.grid(row=0, column=0, sticky="nsew")
         main_frame.rowconfigure(0, weight=1)
@@ -454,16 +492,11 @@ class AppController:
         self.view = MainView(canvas, self)
         canvas_frame_id = canvas.create_window((0, 0), window=self.view, anchor="nw")
 
-        def on_view_configure(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
-
-        def on_canvas_configure(event):
-            canvas.itemconfig(canvas_frame_id, width=event.width)
-
-        self.view.bind("<Configure>", on_view_configure)
-        canvas.bind("<Configure>", on_canvas_configure)
+        self.view.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(canvas_frame_id, width=e.width))
 
         self._create_status_bar()
+        self._load_xtal_library()
 
     def _create_menu(self):
         menubar = tk.Menu(self.master)
@@ -482,7 +515,7 @@ class AppController:
 
     def _create_status_bar(self):
         self.status_var = tk.StringVar(value="Pronto. Inserire i parametri e avviare il calcolo.")
-        status_bar_frame = ttk.Frame(self.master, relief="sunken")
+        status_bar_frame = ttk.Frame(self.master, relief="sunken", style="TFrame")
         status_bar_frame.grid(row=1, column=0, sticky="ew")
         status_bar = ttk.Label(status_bar_frame, textvariable=self.status_var, anchor=tk.W, padding=5)
         status_bar.pack(fill=tk.X)
@@ -492,46 +525,108 @@ class AppController:
         self.status_var.set("I parametri sono stati modificati. Eseguire nuovamente il calcolo.")
         for key in self.view.output_labels:
             if '_status' not in key:
-                self.view.output_labels[key].config(text="...", foreground=AppConfig.COLOR_STALE_RESULT,
+                self.view.output_labels[key].config(text="...", foreground=AppConfig.COLOR_TEXT_SECONDARY,
                                                     font=AppConfig.FONT_VALUE_STALE)
             else:
                 self.view.output_labels[key].config(text="Dati modificati, ricalcolare.",
-                                                    foreground=AppConfig.COLOR_STALE_RESULT, font=AppConfig.FONT_STATUS)
+                                                    foreground=AppConfig.COLOR_TEXT_SECONDARY,
+                                                    font=AppConfig.FONT_STATUS)
 
-    def update_from_xtal_preset(self, event=None):
-        """Updates input fields based on the selected crystal preset."""
-        selected_xtal = self.view.xtal_combo.get()
-        preset = AppConfig.XTAL_PRESETS.get(selected_xtal, {})
+    def _load_xtal_library(self):
+        try:
+            if os.path.exists(AppConfig.LIBRARY_FILENAME):
+                with open(AppConfig.LIBRARY_FILENAME, 'r') as f:
+                    self.xtal_library = json.load(f)
+            else:
+                self.xtal_library = {AppConfig.DEFAULT_XTAL_NAME: {}}
+        except (json.JSONDecodeError, IOError) as e:
+            messagebox.showerror("Errore Libreria", f"Impossibile caricare la libreria dei quarzi.\n{e}")
+            self.xtal_library = {AppConfig.DEFAULT_XTAL_NAME: {}}
 
-        # Define which parameters are controlled by the preset
+        if AppConfig.DEFAULT_XTAL_NAME not in self.xtal_library:
+            self.xtal_library[AppConfig.DEFAULT_XTAL_NAME] = {}
+
+        self.view.update_xtal_library_list(list(self.xtal_library.keys()))
+
+    def _save_xtal_library(self):
+        try:
+            with open(AppConfig.LIBRARY_FILENAME, 'w') as f:
+                json.dump(self.xtal_library, f, indent=4)
+        except IOError as e:
+            messagebox.showerror("Errore Libreria", f"Impossibile salvare la libreria dei quarzi.\n{e}")
+
+    def save_to_library(self):
+        new_name = simpledialog.askstring("Salva Preset Quarzo", "Inserisci un nome per il preset:", parent=self.master)
+        if not new_name or not new_name.strip():
+            return
+
+        if new_name in self.xtal_library and new_name != AppConfig.DEFAULT_XTAL_NAME:
+            if not messagebox.askyesno("Sovrascrivi Preset",
+                                       f"Un preset con il nome '{new_name}' esiste già. Vuoi sovrascriverlo?"):
+                return
+
+        preset_data = {}
         preset_params = [Param.FREQ, Param.C0, Param.ESR_MAX, Param.DL_MAX]
+        for key in preset_params:
+            preset_data[key.name] = (self.view.vars[key].get(), self.view.unit_combos[key].get())
 
+        self.xtal_library[new_name] = preset_data
+        self._save_xtal_library()
+        self.view.update_xtal_library_list(list(self.xtal_library.keys()))
+        self.view.xtal_combo.set(new_name)
+        self.load_from_library()  # Update UI state after saving
+        messagebox.showinfo("Libreria Aggiornata", f"Il preset '{new_name}' è stato salvato con successo.")
+
+    def delete_from_library(self):
+        selected_name = self.view.xtal_combo.get()
+        if selected_name == AppConfig.DEFAULT_XTAL_NAME:
+            return
+
+        if messagebox.askyesno("Conferma Eliminazione",
+                               f"Sei sicuro di voler eliminare il preset '{selected_name}' dalla libreria?"):
+            del self.xtal_library[selected_name]
+            self._save_xtal_library()
+            self._load_xtal_library()
+            self.reset_application()
+            self.status_var.set(f"Preset '{selected_name}' eliminato.")
+
+    def load_from_library(self, event=None):
+        """Updates input fields based on the selected crystal from the library."""
+        selected_xtal = self.view.xtal_combo.get()
+        preset = self.xtal_library.get(selected_xtal, {})
+
+        preset_params = [Param.FREQ, Param.C0, Param.ESR_MAX, Param.DL_MAX]
         is_custom = selected_xtal == AppConfig.DEFAULT_XTAL_NAME
 
-        # Update values and states for preset-controlled fields
-        for key in preset_params:
-            if key.name in preset:
+        self.view.delete_xtal_button.config(state='disabled' if is_custom else 'normal')
+
+        for key in Param:
+            is_preset_param = key in preset_params
+
+            if is_preset_param and key.name in preset:
                 val, unit = preset[key.name]
                 self.view.vars[key].set(val)
                 self.view.unit_combos[key].set(unit)
 
-            entry_style = 'TEntry' if is_custom else 'Readonly.TEntry'
-            self.view.entries[key].config(state='normal' if is_custom else 'readonly', style=entry_style)
-            self.view.unit_combos[key].config(state='readonly' if is_custom else 'disabled')
+            entry_state = 'normal' if is_custom or not is_preset_param else 'readonly'
+            combo_state = 'readonly' if is_custom or not is_preset_param else 'disabled'
 
-        self.on_input_change(None)  # Mark results as stale
+            self.view.entries[key].config(state=entry_state)
+            self.view.unit_combos[key].config(state=combo_state)
+
+        self.on_input_change(None)
 
     def update_probe_capacitance(self, event=None):
         """Updates the C_probe entry based on combobox selection."""
         selected_name = self.view.probe_combo.get()
 
         if selected_name == "Manuale/Custom":
-            self.view.entries[Param.C_PROBE].config(state='normal', style='TEntry')
+            self.view.entries[Param.C_PROBE].config(state='normal')
         elif selected_name in AppConfig.PROBE_MODELS:
             probe_cap_val = AppConfig.PROBE_MODELS[selected_name]
             self.view.vars[Param.C_PROBE].set(f"{probe_cap_val}")
             self.view.unit_combos[Param.C_PROBE].set("pF")
-            self.view.entries[Param.C_PROBE].config(state='readonly', style='Readonly.TEntry')
+            self.view.entries[Param.C_PROBE].config(state='readonly')
         self.on_input_change(Param.C_PROBE)
 
     def _format_value(self, value, precision=3):
@@ -596,7 +691,7 @@ class AppController:
         self.view.output_labels["drive_level"].config(text=self._format_value(results['drive_level'] * 1e6))
 
         for key in ["cl_eff", "gm_crit", "gain_margin", "rext_est", "drive_level"]:
-            self.view.output_labels[key].config(font=AppConfig.FONT_VALUE, foreground='#333')
+            self.view.output_labels[key].config(font=AppConfig.FONT_VALUE, foreground=AppConfig.COLOR_TEXT_PRIMARY)
 
         self._update_status_labels()
 
@@ -655,11 +750,10 @@ class AppController:
     def reset_application(self):
         """Resets all input fields to their default values."""
         self.model.reset()
-        # Reset to manual mode
-        self.view.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
-        self.update_from_xtal_preset()
 
-        # Set default values for manual mode
+        self.view.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
+        self.load_from_library()
+
         for _, params in AppConfig.PARAM_MAP.items():
             for key_str, _, default_val, default_unit, _, _ in params:
                 key = Param[key_str]
@@ -675,7 +769,7 @@ class AppController:
         """Saves all input parameters to a JSON file."""
         filepath = filedialog.asksaveasfilename(
             defaultextension=".xtal",
-            filetypes=[("Crystal Oscillator Validator Files", "*.xtal"), ("All Files", "*.*")]
+            filetypes=[("Crystal Validator Work Files", "*.xtal"), ("All Files", "*.*")]
         )
         if not filepath:
             return
@@ -704,7 +798,7 @@ class AppController:
     def load_work(self):
         """Loads input parameters from a JSON file."""
         filepath = filedialog.askopenfilename(
-            filetypes=[("Crystal Oscillator Validator Files", "*.xtal"), ("All Files", "*.*")]
+            filetypes=[("Crystal Validator Work Files", "*.xtal"), ("All Files", "*.*")]
         )
         if not filepath:
             return
@@ -722,15 +816,13 @@ class AppController:
                 self.view.xtal_combo.set(data["__presets__"].get("xtal", AppConfig.DEFAULT_XTAL_NAME))
                 self.view.probe_combo.set(data["__presets__"].get("probe", AppConfig.DEFAULT_PROBE_NAME))
 
-            # Refresh UI state based on loaded presets
-            self.update_from_xtal_preset()
+            self.load_from_library()
             self.update_probe_capacitance()
 
             self.status_var.set(f"Lavoro caricato da: {filepath}")
 
         except Exception as e:
-            messagebox.showerror("Errore di Caricamento",
-                                 f"Impossibile caricare il file. Potrebbe essere corrotto o non valido.\nErrore: {e}")
+            messagebox.showerror("Errore di Caricamento", f"Impossibile caricare il file.\nErrore: {e}")
             self.status_var.set("Caricamento fallito.")
 
     def show_about_dialog(self):
