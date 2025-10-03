@@ -11,7 +11,38 @@ La progettazione di oscillatori a cristallo di quarzo, in particolare nella topo
 
 ---
 
-## 2. Contesto Teorico: L'Oscillatore Pierce
+## 2. Installazione
+
+Per eseguire il Crystal Oscillator Validator, è necessario avere installato Python 3.
+
+1.  **Clonare o scaricare il repository.**
+
+2.  **Creare e attivare un ambiente virtuale (consigliato):**
+    ```bash
+    # Creare l'ambiente
+    python -m venv .venv
+
+    # Attivare su Windows
+    .venv\Scripts\activate
+
+    # Attivare su macOS/Linux
+    source .venv/bin/activate
+    ```
+
+3.  **Installare la dipendenza necessaria:**
+    Una volta attivato l'ambiente virtuale, installare la libreria `numpy`.
+    ```bash
+    pip install numpy
+    ```
+
+4.  **Eseguire il programma:**
+    ```bash
+    python main.py
+    ```
+
+---
+
+## 3. Contesto Teorico: L'Oscillatore Pierce
 
 L'applicazione si focalizza sulla validazione di oscillatori a cristallo basati sulla topologia **Pierce**, la più diffusa in ambito di microcontrollori (MCU) per la sua stabilità, semplicità ed efficienza. Un oscillatore Pierce è costituito da un amplificatore invertente (tipicamente una porta logica CMOS interna all'MCU) e una rete di feedback a π (pi-greco) formata dal cristallo di quarzo e due condensatori di carico esterni (CL1, CL2).
 
@@ -21,11 +52,11 @@ L'applicazione si focalizza sulla validazione di oscillatori a cristallo basati 
 
 ---
 
-## 3. Modello Matematico e Implementazione
+## 4. Modello Matematico e Implementazione
 
 Le analisi eseguite dal software si basano sulle formule e le metodologie descritte in documenti di riferimento come la nota applicativa **AN2867 di STMicroelectronics**. Di seguito vengono dettagliate le formule implementate.
 
-### 3.1. Capacità di Carico Effettiva (CL_eff)
+### 4.1. Capacità di Carico Effettiva (CL_eff)
 
 - **Formula:**
   ```
@@ -39,7 +70,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `C_stray`: Capacità parassita totale su un singolo ramo dell'oscillatore.
 - **Interpretazione Fisica:** `CL_eff` rappresenta la capacità totale vista dal cristallo guardando verso la rete di carico. Il suo valore influenza direttamente la frequenza di oscillazione e la stabilità. La formula deriva dalla serie dei due rami capacitivi (ciascuno composto da `CL_sel` in parallelo con `C_stray`).
 
-### 3.2. Transconduttanza Critica (Gm_crit)
+### 4.2. Transconduttanza Critica (Gm_crit)
 
 - **Formula:**
   ```
@@ -53,7 +84,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `C0`: Capacità di shunt del cristallo (dal datasheet).
 - **Interpretazione Fisica:** `Gm_crit` è la **transconduttanza minima** che l'amplificatore interno all'MCU deve possedere per innescare e sostenere l'oscillazione. Essa deve essere sufficiente a compensare le perdite introdotte dalla `Total_ESR` alla frequenza di lavoro. Se la transconduttanza dell'MCU (`Gm_MCU`) è inferiore a questo valore, l'oscillatore non partirà.
 
-### 3.3. Margine di Guadagno (Gain Margin, S_f)
+### 4.3. Margine di Guadagno (Gain Margin, S_f)
 
 - **Formula:**
   ```
@@ -63,7 +94,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `Gm_MCU`: Transconduttanza dell'amplificatore dell'MCU (dal datasheet del microcontrollore).
 - **Interpretazione Fisica:** Il Margine di Guadagno, noto anche come *Safety Factor* (S_f), è un indicatore adimensionale della **robustezza dell'oscillatore**. Indica di quanto il guadagno dell'amplificatore supera il minimo necessario. Un margine elevato garantisce un avvio rapido e affidabile in un ampio range di temperature, tensioni di alimentazione e variazioni di processo (sia del cristallo che dell'MCU).
 
-### 3.4. Drive Level (DL)
+### 4.4. Drive Level (DL)
 
 - **Formula:**
   ```
@@ -77,7 +108,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
 
 ---
 
-## 4. Motore di Validazione: Criteri e Soglie
+## 5. Motore di Validazione: Criteri e Soglie
 
 Il software automatizza la valutazione del design confrontando i risultati calcolati con soglie raccomandate dall'industria.
 
@@ -104,23 +135,23 @@ Il software automatizza la valutazione del design confrontando i risultati calco
 
 ---
 
-## 5. Architettura Software e Funzionalità Avanzate
+## 6. Architettura Software e Funzionalità Avanzate
 
-### 5.1. Libreria dei Quarzi Dinamica
+### 6.1. Libreria dei Quarzi Dinamica
 
 Lo strumento gestisce una libreria di componenti persistente, salvata nel file `xtal_library.json` nella directory dell'applicazione. Questo file JSON contiene un dizionario di profili di quarzi, dove ogni profilo memorizza i parametri fondamentali (F, C0, ESR, DL_max).
 
 - **Gestione**: L'utente può aggiungere nuovi componenti alla libreria (`Salva Quarzo`), caricarli per un'analisi (`<Combobox>`) o rimuoverli (`Elimina`).
 - **Scopo**: Centralizzare e riutilizzare le specifiche dei componenti approvati o di uso comune, riducendo l'inserimento manuale e gli errori.
 
-### 5.2. Gestione delle Sessioni di Lavoro
+### 6.2. Gestione delle Sessioni di Lavoro
 
 È fondamentale distinguere la libreria (dati di *componenti*) dalle sessioni (dati di *analisi*).
 
 - **File di Lavoro (`.xtal`)**: Tramite `File > Salva Lavoro`, l'utente può salvare l'intero stato dell'applicazione in un file `.xtal`. Questo file è un'istantanea JSON che include **tutti i parametri di input**: specifiche del quarzo, parametri del circuito (Gm, CL, parassite) e misurazioni (Vpp, sonda).
 - **Scopo**: Archiviare una validazione completa per la documentazione di progetto, confrontare diverse configurazioni circuitali per lo stesso quarzo o riprendere un'analisi interrotta.
 
-### 5.3. Interfaccia Utente e Feedback in Tempo Reale
+### 6.3. Interfaccia Utente e Feedback in Tempo Reale
 
 L'interfaccia è progettata per guidare l'utente e prevenire errori:
 
@@ -130,7 +161,7 @@ L'interfaccia è progettata per guidare l'utente e prevenire errori:
 
 ---
 
-## 6. Protocollo Operativo Consigliato
+## 7. Protocollo Operativo Consigliato
 
 Per una validazione completa e rigorosa, si raccomanda di seguire i seguenti passaggi:
 
