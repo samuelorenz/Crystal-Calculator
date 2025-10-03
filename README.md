@@ -1,94 +1,144 @@
-[# Crystal Oscillator Validator
+# Crystal Oscillator Validator: A Technical Reference
 
-**Versione:** 3.4  
+**Versione Software:** 5.0
 **Autore:** Samuele Lorenzoni
 
 ---
 
-## Descrizione
+## 1. Abstract
 
-Questo strumento software è progettato per ingegneri e progettisti elettronici al fine di verificare e dimensionare circuiti oscillatori a topologia Pierce, comunemente impiegati con microcontrollori e altri dispositivi digitali.
-
-A partire dalle specifiche del cristallo di quarzo e dai parametri del circuito, l'applicazione calcola i parametri operativi chiave (capacità di carico effettiva, transconduttanza critica, margine di guadagno, drive level) e fornisce una valutazione immediata sulla robustezza e l'affidabilità del design.
+La progettazione di oscillatori a cristallo di quarzo, in particolare nella topologia Pierce, è un'attività critica nell'elettronica digitale. Un design non robusto può causare instabilità di frequenza, mancati avvii o danni permanenti al risuonatore, con conseguenze gravi sull'affidabilità del prodotto finale. Questo documento descrive il **Crystal Oscillator Validator**, un'applicazione software sviluppata per assistere i progettisti nella validazione sistematica e quantitativa di tali circuiti. Lo strumento implementa un modello matematico basato su note applicative standard del settore per calcolare parametri chiave come il **Margine di Guadagno** e il **Drive Level**. Attraverso un'interfaccia grafica interattiva, il software fornisce una valutazione oggettiva del design, evidenziando criticità e aree di miglioramento. Vengono inoltre discusse le funzionalità di gestione di una libreria di componenti e di salvataggio delle sessioni di analisi, che rendono lo strumento un ausilio completo per la progettazione e l'archiviazione della documentazione tecnica.
 
 ---
 
-## Caratteristiche Principali
+## 2. Contesto Teorico: L'Oscillatore Pierce
 
-* **Analisi Completa**: Calcolo dei principali indicatori di performance di un oscillatore Pierce.
-* **Preset di Componenti**: Database integrato di quarzi (es. ECS, Abracon, MicroCrystal) e sonde di misura (es. LeCroy, Tektronix) per accelerare l'inserimento dei dati.
-* **Salvataggio e Caricamento Sessioni**: Possibilità di salvare tutti i parametri di input in un file locale (`.xtal`) e ricaricarli in un secondo momento per continuare il lavoro.
-* **Interfaccia Intuitiva**: GUI progettata per un inserimento dati efficiente, con gestione automatica delle unità di misura.
-* **Validazione Immediata**: Report finale con indicazioni cromatiche (OK, Attenzione, Critico) per una rapida interpretazione dei risultati.
-* **Architettura Modulare (MVC)**: Motore di calcolo disaccoppiato dall'interfaccia utente per garantire manutenibilità e scalabilità.
+L'applicazione si focalizza sulla validazione di oscillatori a cristallo basati sulla topologia **Pierce**, la più diffusa in ambito di microcontrollori (MCU) per la sua stabilità, semplicità ed efficienza. Un oscillatore Pierce è costituito da un amplificatore invertente (tipicamente una porta logica CMOS interna all'MCU) e una rete di feedback a π (pi-greco) formata dal cristallo di quarzo e due condensatori di carico esterni (CL1, CL2).
 
----
+- **Il Cristallo come Risuonatore**: Il cristallo di quarzo opera come un elemento risonante ad altissimo fattore di merito (Q). Il suo comportamento elettrico è descritto dal modello di BVD (Butterworth-Van Dyke), che include una capacità statica `C0` (shunt) e un ramo serie RLC (`R1`, `L1`, `C1`). Ai fini di questo strumento, i parametri fondamentali forniti dal datasheet sono la **Frequenza Nominale (F)**, la **Resistenza Serie Equivalente (ESR o R1)**, la **Capacità di Shunt (C0)** e il **Massimo Drive Level (DL_max)**.
 
-## Preset e Analisi Worst-Case
-
-Lo strumento include un database di preset per quarzi di uso comune. Questa funzionalità permette di caricare automaticamente i parametri di datasheet del componente selezionato.
-
-Per i preset che si riferiscono a una *serie* di componenti (es. Abracon IXA20), i valori caricati sono rappresentativi di un caso d'uso comune (es. 24 MHz) e utilizzano le specifiche **worst-case** (es. ESR massimo) indicate dal produttore. Questo approccio garantisce che la validazione del circuito sia conservativa e robusta, coprendo le condizioni operative più critiche.
+- **Condizione di Oscillazione**: Per un'oscillazione stabile, il circuito deve soddisfare il **criterio di Barkhausen**: il guadagno totale di anello deve essere maggiore di 1 e lo sfasamento totale deve essere di 360°. L'amplificatore invertente fornisce 180°, mentre la rete a π deve fornire gli altri 180° e compensare le perdite energetiche introdotte dal cristallo (rappresentate dalla sua ESR).
 
 ---
 
-## Modello Teorico di Riferimento
+## 3. Modello Matematico e Implementazione
 
-L'analisi si basa sul modello elettrico equivalente del risonatore a quarzo e sulle condizioni di Barkhausen per l'innesco dell'oscillazione, in accordo con le principali application note di settore (es. AN2867 di STMicroelectronics).
+Le analisi eseguite dal software si basano sulle formule e le metodologie descritte in documenti di riferimento come la nota applicativa **AN2867 di STMicroelectronics**. Di seguito vengono dettagliate le formule implementate.
 
-### 1. Capacità di Carico Effettiva ($C_{L_{eff}}$)
+### 3.1. Capacità di Carico Effettiva (CL_eff)
 
-È la capacità totale vista ai capi del cristallo. Assumendo un layout simmetrico, è calcolata come la serie dei due rami capacitivi del circuito:
+- **Formula:**
+  ```
+  C_stray = Cs_PCB + Cs_PIN
+  CL_eff = (CL_sel + C_stray) / 2
+  ```
+- **Variabili:**
+  - `CL_sel`: Capacità del singolo condensatore di carico esterno (assumendo CL1 = CL2).
+  - `Cs_PCB`: Capacità parassita dovuta alle piste del circuito stampato (PCB).
+  - `Cs_PIN`: Capacità parassita intrinseca del pin di I/O dell'MCU.
+  - `C_stray`: Capacità parassita totale su un singolo ramo dell'oscillatore.
+- **Interpretazione Fisica:** `CL_eff` rappresenta la capacità totale vista dal cristallo guardando verso la rete di carico. Il suo valore influenza direttamente la frequenza di oscillazione e la stabilità. La formula deriva dalla serie dei due rami capacitivi (ciascuno composto da `CL_sel` in parallelo con `C_stray`).
 
-C_stray_single_leg = CS_PCB + CS_PIN
-CL_eff = (CL_sel + C_stray_single_leg) / 2.0
+### 3.2. Transconduttanza Critica (Gm_crit)
 
+- **Formula:**
+  ```
+  Total_ESR = ESR_max + Rext_sel
+  Gm_crit = 4 * Total_ESR * (2 * pi * F)^2 * (C0 + CL_eff)^2
+  ```
+- **Variabili:**
+  - `ESR_max`: Massima Resistenza Serie Equivalente del cristallo (dal datasheet).
+  - `Rext_sel`: Valore della resistenza esterna opzionale, usata per limitare il Drive Level.
+  - `F`: Frequenza di risonanza nominale del cristallo.
+  - `C0`: Capacità di shunt del cristallo (dal datasheet).
+- **Interpretazione Fisica:** `Gm_crit` è la **transconduttanza minima** che l'amplificatore interno all'MCU deve possedere per innescare e sostenere l'oscillazione. Essa deve essere sufficiente a compensare le perdite introdotte dalla `Total_ESR` alla frequenza di lavoro. Se la transconduttanza dell'MCU (`Gm_MCU`) è inferiore a questo valore, l'oscillatore non partirà.
 
-* `CL_sel`: Capacità del singolo condensatore di carico esterno.
-* `CS_PCB`: Capacità parassita del PCB per un singolo ramo.
-* `CS_PIN`: Capacità parassita del pin del MCU per un singolo ramo.
+### 3.3. Margine di Guadagno (Gain Margin, S_f)
 
-### 2. Transconduttanza Critica e Margine di Guadagno
+- **Formula:**
+  ```
+  Gain_Margin = Gm_MCU / Gm_crit
+  ```
+- **Variabili:**
+  - `Gm_MCU`: Transconduttanza dell'amplificatore dell'MCU (dal datasheet del microcontrollore).
+- **Interpretazione Fisica:** Il Margine di Guadagno, noto anche come *Safety Factor* (S_f), è un indicatore adimensionale della **robustezza dell'oscillatore**. Indica di quanto il guadagno dell'amplificatore supera il minimo necessario. Un margine elevato garantisce un avvio rapido e affidabile in un ampio range di temperature, tensioni di alimentazione e variazioni di processo (sia del cristallo che dell'MCU).
 
-Per garantire l'innesco dell'oscillazione, la transconduttanza ($g_m$) dell'amplificatore del MCU deve superare un valore critico ($g_{m_{crit}}$):
+### 3.4. Drive Level (DL)
 
-gm_crit = 4 * (ESR_max + R_ext) * (2 * pi * f)^2 * (C0 + CL_eff)^2
-
-
-Il **Margine di Guadagno** (Gain Margin) quantifica la robustezza dell'innesco:
-
-GainMargin = gm / gm_crit
-
-
-Un valore `GainMargin > 5` è raccomandato per un design robusto.
-
-### 3. Drive Level (DL)
-
-Rappresenta la potenza dissipata dal cristallo. Un valore eccessivo può danneggiarlo. Viene stimato misurando la tensione picco-picco ($V_{pp}$) su un ramo del circuito:
-
-C_leg_for_dl = CL_sel + CS_PCB + CS_PIN + C_probe
-DL = ((ESR_max + R_ext) / 2.0) * (pi * f * C_leg_for_dl * Vpp)^2
-
-* `C_probe`: Capacità di ingresso della sonda utilizzata per la misura.
+- **Formula:**
+  ```
+  C_leg_total = CL_sel + C_stray + C_probe
+  DL = (Total_ESR / 2) * (pi * F * C_leg_total)^2 * Vpp_measured^2
+  ```
+- **Variabili:**
+  - `C_probe`: Capacità della sonda dell'oscilloscopio usata per la misurazione.
+  - `Vpp_measured`: Tensione picco-picco misurata sul pin di output dell'oscillatore (solitamente OSC_IN/CL1).
+- **Interpretazione Fisica:** Il Drive Level è la **potenza dissipata dal cristallo** durante l'oscillazione. Un pilotaggio eccessivo (overdrive) può causare un invecchiamento precoce, una deriva in frequenza o un danno fisico permanente al quarzo. Questa formula calcola la potenza basandosi sulla corrente che scorre attraverso il ramo capacitivo misurato. È fondamentale includere `C_probe`, poiché la sonda altera il comportamento del circuito e la tensione misurata.
 
 ---
 
-## Architettura Software
+## 4. Motore di Validazione: Criteri e Soglie
 
-L'applicazione adotta il design pattern **Model-View-Controller (MVC)**:
+Il software automatizza la valutazione del design confrontando i risultati calcolati con soglie raccomandate dall'industria.
 
-* **Model (`CrystalCircuitModel`)**: Implementa il motore di calcolo e le formule teoriche.
-* **View (`MainView`)**: Gestisce l'intera interfaccia utente (widget, layout, stili).
-* **Controller (`AppController`)**: Funge da orchestratore, coordinando il flusso di dati tra Model e View.
+- **Criterio 1: Avvio dell'Oscillazione**
+  - **Controllo**: `Gm_MCU > Gm_crit`
+  - **Logica**: Se la transconduttanza del dispositivo attivo non supera quella critica, l'oscillazione non può essere sostenuta.
+  - **Stati**: `CRITICO` (se `Gm_MCU < Gm_crit`), `OK` (se `Gm_MCU > Gm_crit`).
+
+- **Criterio 2: Robustezza del Design (Gain Margin)**
+  - **Controllo**: Valore di `Gain_Margin`.
+  - **Logica**: Un margine di guadagno elevato è necessario per compensare le variazioni dei componenti e le derive ambientali.
+  - **Stati e Soglie**: 
+    - `ECCELLENTE` (`Gain_Margin ≥ 5`): Raccomandato dalla maggior parte dei produttori per design commerciali.
+    - `OTTIMIZZARE` (`3 ≤ Gain_Margin < 5`): Funzionante in condizioni nominali, ma a rischio ai limiti di temperatura/tensione.
+    - `CRITICO` (`Gain_Margin < 3`): Design inaffidabile, con alto rischio di mancato avvio.
+
+- **Criterio 3: Affidabilità e Vita Utile (Drive Level)**
+  - **Controllo**: Rapporto `DL / DL_max`.
+  - **Logica**: Il superamento del `DL_max` specificato dal produttore del cristallo ne compromette l'integrità.
+  - **Stati e Soglie**:
+    - `OK` (`DL / DL_max ≤ 0.8`): Il cristallo opera in un'area di totale sicurezza.
+    - `ATTENZIONE` (`0.8 < DL / DL_max ≤ 1.0`): Il design è al limite. Si raccomanda di considerare una resistenza `Rext` per ridurre la potenza.
+    - `CRITICO` (`DL / DL_max > 1.0`): Overdrive. Il cristallo è a rischio di danneggiamento. L'uso di `Rext` è obbligatorio.
 
 ---
 
-## Requisiti e Installazione
+## 5. Architettura Software e Funzionalità Avanzate
 
-* **Python**: Versione 3.7 o superiore.
-* **Dipendenze**: `numpy`
+### 5.1. Libreria dei Quarzi Dinamica
 
-Installare la dipendenza necessaria tramite pip:
-```bash
-pip install numpy
-](https://github.com/samuelorenz/Crystal-Calculator)
+Lo strumento gestisce una libreria di componenti persistente, salvata nel file `xtal_library.json` nella directory dell'applicazione. Questo file JSON contiene un dizionario di profili di quarzi, dove ogni profilo memorizza i parametri fondamentali (F, C0, ESR, DL_max).
+
+- **Gestione**: L'utente può aggiungere nuovi componenti alla libreria (`Salva Quarzo`), caricarli per un'analisi (`<Combobox>`) o rimuoverli (`Elimina`).
+- **Scopo**: Centralizzare e riutilizzare le specifiche dei componenti approvati o di uso comune, riducendo l'inserimento manuale e gli errori.
+
+### 5.2. Gestione delle Sessioni di Lavoro
+
+È fondamentale distinguere la libreria (dati di *componenti*) dalle sessioni (dati di *analisi*).
+
+- **File di Lavoro (`.xtal`)**: Tramite `File > Salva Lavoro`, l'utente può salvare l'intero stato dell'applicazione in un file `.xtal`. Questo file è un'istantanea JSON che include **tutti i parametri di input**: specifiche del quarzo, parametri del circuito (Gm, CL, parassite) e misurazioni (Vpp, sonda).
+- **Scopo**: Archiviare una validazione completa per la documentazione di progetto, confrontare diverse configurazioni circuitali per lo stesso quarzo o riprendere un'analisi interrotta.
+
+### 5.3. Interfaccia Utente e Feedback in Tempo Reale
+
+L'interfaccia è progettata per guidare l'utente e prevenire errori:
+
+- **Stale Data Invalidation**: Se un qualsiasi parametro di input viene modificato, tutti i risultati calcolati vengono immediatamente invalidati (visualizzati come `...` in grigio), forzando l'utente a eseguire un nuovo calcolo per garantire la coerenza dei dati.
+- **Input Validation**: I campi di input numerici sono validati in tempo reale. Un input non valido (es. testo) colora il campo di rosso e impedisce il calcolo, mostrando un errore esplicito.
+- **Barra di Stato**: Fornisce un log testuale delle azioni eseguite e dello stato corrente, migliorando la consapevolezza dell'utente.
+
+---
+
+## 6. Protocollo Operativo Consigliato
+
+Per una validazione completa e rigorosa, si raccomanda di seguire i seguenti passaggi:
+
+1.  **Raccolta Dati**: Reperire i datasheet del cristallo e dell'MCU. Ottenere i valori di `F`, `C0`, `ESR_max`, `DL_max` per il cristallo e `Gm_MCU`, `Cs_PIN` per l'MCU.
+2.  **Stima Parassiti**: Stimare `Cs_PCB` in base al layout o usare un valore conservativo (es. 1-3 pF).
+3.  **Configurazione Iniziale**: Inserire tutti i parametri nello strumento. Selezionare il modello di sonda corretto o inserire la sua capacità manualmente.
+4.  **Misurazione Sperimentale**: Assemblare il circuito e misurare la tensione `Vpp` sul pin di output dell'oscillatore (es. OSC_IN). Inserire questo valore nel campo `Vpp Misurata`.
+5.  **Esecuzione Calcoli**: Premere il pulsante `Esegui Calcoli`.
+6.  **Analisi dei Risultati**: Valutare criticamente i tre criteri nel pannello "Stato di Validazione Finale".
+7.  **Iterazione (se necessario)**: Se uno dei criteri è `CRITICO` o `OTTIMIZZARE`, modificare il design (es. cambiare i valori di `CL_sel`, aggiungere/modificare `Rext_sel`) e ripetere dal punto 4.
+8.  **Archiviazione**: Una volta ottenuto un design robusto, salvare la sessione di lavoro (`File > Salva Lavoro`) per la documentazione di progetto.
