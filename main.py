@@ -10,39 +10,40 @@ from enum import Enum
 
 class AppConfig:
     """Centralizes all application constants and configuration."""
-    APP_VERSION = "3.3"  # Versione aggiornata
+    APP_VERSION = "3.4"  # Versione aggiornata
     LIBRARY_FILENAME = "xtal_library.json"
 
-    # Colors
-    COLOR_OK = "#1C8040"
-    COLOR_WARN = "#D9822B"
-    COLOR_ERROR = "#C93838"
-    COLOR_BACKGROUND = "#F0F0F0"
-    COLOR_FRAME_BG = "#FFFFFF"
-    COLOR_ACCENT = "#0078D4"
-    COLOR_ACCENT_DARK = "#005a9e"
-    COLOR_TEXT_PRIMARY = "#212121"
-    COLOR_TEXT_SECONDARY = "#757575"
-    COLOR_SEPARATOR = "#BDBDBD"
-    COLOR_STALE_RESULT = "#888888"
-    COLOR_INVALID_ENTRY = "#FFD2D2"
-    COLOR_DISABLED_ENTRY = "#F7F7F7"
+    # Colors (Scientific Paper Theme)
+    COLOR_OK = "#006400"                # Dark Green
+    COLOR_WARN = "#E69500"              # Amber/Ochre
+    COLOR_ERROR = "#C00000"             # Dark Red
+    COLOR_BACKGROUND = "#FFFFFF"        # White
+    COLOR_FRAME_BG = "#FDFDFD"          # Off-white
+    COLOR_ACCENT = "#A00000"             # Dark, academic red
+    COLOR_ACCENT_DARK = "#700000"        # Darker red for active states
+    COLOR_TEXT_PRIMARY = "#000000"       # Black
+    COLOR_TEXT_SECONDARY = "#555555"     # Dark Gray
+    COLOR_SEPARATOR = "#DDDDDD"         # Light Gray
+    COLOR_STALE_RESULT = "#777777"       # Gray
+    COLOR_INVALID_ENTRY = "#FFEEEE"     # Light pink
+    COLOR_DISABLED_ENTRY = "#F5F5F5"    # Very light gray
 
-    # Fonts
-    FONT_DEFAULT = ('Segoe UI', 10)
-    FONT_ITALIC = ('Segoe UI', 9, 'italic')
-    FONT_BOLD = ('Segoe UI', 10, 'bold')
-    FONT_TITLE = ('Segoe UI', 11, 'bold')
-    FONT_GROUP_TITLE = ('Segoe UI', 12, 'bold')
-    FONT_HEADER = ('Segoe UI', 12, 'bold')
-    FONT_MAIN_TITLE = ('Segoe UI', 16, 'bold')
-    FONT_VALUE = ('Consolas', 12, 'bold')
-    FONT_VALUE_STALE = ('Consolas', 12, 'normal')
-    FONT_STATUS = ('Segoe UI', 11, 'bold')
-    # Font per la finestra delle formule
-    FONT_FORMULA_TITLE = ('Segoe UI', 12, 'bold')
-    FONT_FORMULA = ('Consolas', 11, 'bold')
-    FONT_FORMULA_DESC = ('Segoe UI', 10)
+    # Fonts (Scientific Paper Theme)
+    FONT_DEFAULT = ('Times New Roman', 11)
+    FONT_ITALIC = ('Times New Roman', 10, 'italic')
+    FONT_BOLD = ('Times New Roman', 11, 'bold')
+    FONT_TITLE = ('Times New Roman', 12, 'bold')
+    FONT_GROUP_TITLE = ('Times New Roman', 13, 'bold')
+    FONT_HEADER = ('Times New Roman', 14, 'bold')
+    FONT_MAIN_TITLE = ('Times New Roman', 18, 'bold')
+    FONT_VALUE = ('Times New Roman', 12, 'bold')
+    FONT_VALUE_STALE = ('Times New Roman', 12, 'normal')
+    FONT_STATUS = ('Times New Roman', 11, 'bold')
+    FONT_FINAL_STATUS = ('Times New Roman', 16, 'bold')
+    # Font for the formulas window
+    FONT_FORMULA_TITLE = ('Times New Roman', 13, 'bold')
+    FONT_FORMULA = ('Courier New', 11, 'bold') # Monospaced for formulas
+    FONT_FORMULA_DESC = ('Times New Roman', 11)
 
     # Unit Multipliers
     UNIT_MULTIPLIERS = {
@@ -282,7 +283,7 @@ class MainView(ttk.Frame):
 
     def _configure_styles(self):
         style = ttk.Style()
-        style.theme_use('clam')
+        style.theme_use('classic')
 
         cfg = AppConfig
 
@@ -300,10 +301,7 @@ class MainView(ttk.Frame):
 
         # Entry fields
         style.configure("TEntry",
-                        fieldbackground=cfg.COLOR_FRAME_BG,
-                        font=('Segoe UI', 10),
-                        borderwidth=0,
-                        relief='flat',
+                        font=('Times New Roman', 11),
                         padding=5)
         style.map("TEntry",
                   fieldbackground=[('readonly', cfg.COLOR_DISABLED_ENTRY)],
@@ -311,31 +309,31 @@ class MainView(ttk.Frame):
         style.configure("Invalid.TEntry", fieldbackground=cfg.COLOR_INVALID_ENTRY)
 
         # Buttons
+        style.configure("TButton",
+                        font=cfg.FONT_DEFAULT,
+                        padding=(10, 5),
+                        relief='raised')
+        style.map("TButton",
+                  background=[('active', cfg.COLOR_DISABLED_ENTRY)])
+
         style.configure("Calc.TButton",
                         font=cfg.FONT_HEADER,
                         padding=(20, 10),
                         background=cfg.COLOR_ACCENT,
-                        foreground='white',
-                        borderwidth=0,
-                        relief='flat')
+                        foreground='white')
         style.map("Calc.TButton",
                   background=[('active', cfg.COLOR_ACCENT_DARK)])
 
         style.configure("Secondary.TButton",
                         font=cfg.FONT_DEFAULT,
-                        padding=(10, 5),
-                        background=cfg.COLOR_FRAME_BG,
-                        foreground=cfg.COLOR_TEXT_PRIMARY,
-                        borderwidth=1,
-                        bordercolor=cfg.COLOR_SEPARATOR,
-                        relief='flat')
-        style.map("Secondary.TButton",
-                  background=[('active', cfg.COLOR_BACKGROUND)])
+                        padding=(10, 5))
 
         style.configure("Delete.TButton", foreground=cfg.COLOR_ERROR)
-        style.map("Delete.TButton",
-                  background=[('active', '#FFEBEE')],
-                  bordercolor=[('active', cfg.COLOR_ERROR)])
+
+        # Combobox
+        style.configure("TCombobox",
+                        font=('Times New Roman', 11),
+                        padding=5)
 
     def _create_widgets(self):
         self.pack(fill="both", expand=True)
@@ -401,7 +399,7 @@ class MainView(ttk.Frame):
                 var.trace_add("write", lambda *args, k=key: self.controller.on_input_change(k))
                 self.vars[key] = var
 
-                bg_frame = tk.Frame(input_container, background=AppConfig.COLOR_FRAME_BG)
+                bg_frame = ttk.Frame(input_container, style="Input.TFrame")
                 bg_frame.grid(row=row_idx, column=0, sticky='nsew')
 
                 bg_frame.columnconfigure(0, minsize=320, weight=0)
@@ -511,7 +509,7 @@ class MainView(ttk.Frame):
         ttk.Separator(bg_frame).grid(row=row_idx, column=0, columnspan=4, sticky="ew", pady=15)
         row_idx += 1
 
-        ttk.Label(bg_frame, text="STATO DI VALIDAZIONE FINALE", font=AppConfig.FONT_HEADER,
+        ttk.Label(bg_frame, text="STATO DI VALIDAZIONE", font=AppConfig.FONT_HEADER,
                   foreground=AppConfig.COLOR_ACCENT_DARK, style="Input.TLabel").grid(row=row_idx, column=0,
                                                                                      columnspan=4, sticky="w",
                                                                                      pady=(5, 10))
@@ -526,6 +524,17 @@ class MainView(ttk.Frame):
                                                 style="Input.TLabel", foreground=AppConfig.COLOR_TEXT_SECONDARY)
             self.output_labels[key].grid(row=row_idx, column=1, columnspan=3, sticky="w", padx=10)
             row_idx += 1
+
+        # --- MODIFICA: Aggiunta etichetta stato finale ---
+        ttk.Separator(bg_frame).grid(row=row_idx, column=0, columnspan=4, sticky="ew", pady=(20, 10))
+        row_idx += 1
+
+        final_status_label_title = ttk.Label(bg_frame, text="RISULTATO FINALE:", font=AppConfig.FONT_HEADER, style="Input.TLabel")
+        final_status_label_title.grid(row=row_idx, column=0, sticky="e", padx=5, pady=10)
+
+        self.output_labels["final_status"] = ttk.Label(bg_frame, text="---", font=AppConfig.FONT_FINAL_STATUS, style="Input.TLabel")
+        self.output_labels["final_status"].grid(row=row_idx, column=1, columnspan=3, sticky="w", padx=10)
+        row_idx += 1
 
 
 # --- CONTROLLER (Application Logic) ---
@@ -578,7 +587,6 @@ class AppController:
         file_menu.add_command(label="Esci", command=self.exit_application)
         menubar.add_cascade(label="File", menu=file_menu)
 
-        # --- MODIFICA: Aggiunto menu "Formule" ---
         formulas_menu = tk.Menu(menubar, tearoff=0)
         formulas_menu.add_command(label="Mostra Formule di Calcolo", command=self.show_formulas_window)
         menubar.add_cascade(label="Formule", menu=formulas_menu)
@@ -587,7 +595,6 @@ class AppController:
         help_menu.add_command(label="About", command=self.show_about_dialog)
         menubar.add_cascade(label="Help", menu=help_menu)
 
-    # --- MODIFICA: Aggiunta nuova funzione per mostrare la finestra delle formule ---
     def show_formulas_window(self):
         """Crea e mostra la finestra con le formule."""
         if self._formulas_window is None or not self._formulas_window.winfo_exists():
@@ -610,7 +617,10 @@ class AppController:
                 self.view.output_labels[key].config(text="...", foreground=AppConfig.COLOR_TEXT_SECONDARY,
                                                     font=AppConfig.FONT_VALUE_STALE)
             else:
-                self.view.output_labels[key].config(text="Dati modificati, ricalcolare.",
+                default_text = "Dati modificati, ricalcolare."
+                if key == 'final_status':
+                    default_text = "---"
+                self.view.output_labels[key].config(text=default_text,
                                                     foreground=AppConfig.COLOR_TEXT_SECONDARY,
                                                     font=AppConfig.FONT_STATUS)
 
@@ -799,12 +809,15 @@ class AppController:
         drive_level = results['drive_level']
         dl_ratio = results['dl_ratio']
 
+        is_fail = False
+
         gm_label = self.view.output_labels["gm_crit_status"]
         gm_f = self._format_value(gm_mcu * 1e3, 1)
         gmc_f = self._format_value(gm_crit * 1e3, 1)
         if gm_crit > gm_mcu:
             gm_text = f"Gm ({gm_f} mA/V) < Gm_crit ({gmc_f} mA/V). Avvio non garantito. CRITICO."
             gm_color = AppConfig.COLOR_ERROR
+            is_fail = True
         else:
             gm_text = f"Gm ({gm_f} mA/V) > Gm_crit ({gmc_f} mA/V). OK."
             gm_color = AppConfig.COLOR_OK
@@ -813,15 +826,16 @@ class AppController:
         margin_label = self.view.output_labels["gain_margin_status"]
         threshold = self.model.GM_MARGIN_THRESHOLD
         gm_margin_f = self._format_value(gain_margin, 2)
-        if gain_margin >= threshold:
-            margin_text = f"Gain Margin ({gm_margin_f}) >= {threshold:.1f}. ECCELLENTE."
-            margin_color = AppConfig.COLOR_OK
-        elif gain_margin >= 3.0:
+        if gain_margin < 3.0:
+            margin_text = f"Gain Margin ({gm_margin_f}) troppo basso. Rischio instabilità. CRITICO."
+            margin_color = AppConfig.COLOR_ERROR
+            is_fail = True
+        elif gain_margin < threshold:
             margin_text = f"Gain Margin ({gm_margin_f}) accettabile, ma < {threshold:.1f}. OTTIMIZZARE."
             margin_color = AppConfig.COLOR_WARN
         else:
-            margin_text = f"Gain Margin ({gm_margin_f}) troppo basso. Rischio instabilità. CRITICO."
-            margin_color = AppConfig.COLOR_ERROR
+            margin_text = f"Gain Margin ({gm_margin_f}) >= {threshold:.1f}. ECCELLENTE."
+            margin_color = AppConfig.COLOR_OK
         margin_label.config(text=margin_text, foreground=margin_color)
 
         dl_label = self.view.output_labels["dl_status"]
@@ -831,6 +845,7 @@ class AppController:
         if dl_ratio > 1.0:
             dl_text = f"DL ({dl_f} uW) ECCEDE DL Max ({dl_max_f} uW). Rext obbligatoria. CRITICO."
             dl_color = AppConfig.COLOR_ERROR
+            is_fail = True
         elif dl_ratio > 0.8:
             dl_text = f"DL ({dl_f} uW) vicino al limite (DL/DL_max = {dl_ratio_f}). ATTENZIONE."
             dl_color = AppConfig.COLOR_WARN
@@ -838,6 +853,12 @@ class AppController:
             dl_text = f"DL ({dl_f} uW) entro i limiti di sicurezza (DL/DL_max = {dl_ratio_f}). OK."
             dl_color = AppConfig.COLOR_OK
         dl_label.config(text=dl_text, foreground=dl_color)
+
+        final_status_label = self.view.output_labels["final_status"]
+        if is_fail:
+            final_status_label.config(text="VALIDATION: FAIL", foreground=AppConfig.COLOR_ERROR, font=AppConfig.FONT_FINAL_STATUS)
+        else:
+            final_status_label.config(text="VALIDATION: PASS", foreground=AppConfig.COLOR_OK, font=AppConfig.FONT_FINAL_STATUS)
 
     def reset_application(self):
         """Resets all input fields to be empty."""
@@ -849,7 +870,6 @@ class AppController:
         self.view.xtal_combo.set(AppConfig.DEFAULT_XTAL_NAME)
         self.view.probe_combo.set(AppConfig.DEFAULT_PROBE_NAME)
 
-        # Svuota i campi dopo aver impostato i combo box
         self.load_from_library()
         self.update_probe_capacitance()
 
@@ -857,7 +877,10 @@ class AppController:
         self.on_input_change()
         for key, label in self.view.output_labels.items():
             if '_status' in key:
-                label.config(text="Inserire i dati e calcolare")
+                default_text = "Inserire i dati e calcolare"
+                if key == 'final_status':
+                    default_text = "---"
+                label.config(text=default_text)
             else:
                 label.config(text="N/A")
 

@@ -11,7 +11,28 @@ La progettazione di oscillatori a cristallo di quarzo, in particolare nella topo
 
 ---
 
-## 2. Installazione
+## 2. Novità della Versione 5.0: Interfaccia "Scientific Paper" e Validazione Chiara
+
+Questa versione introduce un'importante revisione estetica e funzionale per migliorare l'esperienza utente e la chiarezza dei risultati.
+
+### 2.1. Estetica "Scientific Paper"
+
+L'interfaccia è stata ridisegnata per assomigliare a un'applicazione scientifica o a uno strumento di laboratorio, con un'estetica più pulita, professionale e accademica.
+- **Caratteri**: L'intera applicazione ora utilizza il font **Times New Roman**, un classico della documentazione tecnica. Le formule matematiche sono rese in **Courier New** per una migliore leggibilità.
+- **Palette Colori**: È stata adottata una palette di colori neutra, dominata da bianco, nero e grigi, che migliora la concentrazione sui dati. Un **rosso scuro accademico** è usato come colore d'accento per evidenziare le azioni principali e gli avvisi critici, sostituendo i precedenti blu e verdi.
+- **Stile dei Widget**: Il tema grafico è stato aggiornato per un aspetto più tradizionale e meno invasivo, favorendo la funzionalità rispetto all'estetica decorativa.
+
+### 2.2. Risultato Finale "PASS / FAIL"
+
+Per rendere la valutazione del design inequivocabile, è stato introdotto un indicatore di stato finale ben visibile.
+- **VALIDATION: PASS**: Visualizzato in verde scuro, indica che tutti i parametri calcolati (avvio, margine, drive level) rientrano nei limiti di sicurezza o accettabilità.
+- **VALIDATION: FAIL**: Visualizzato in rosso scuro, indica che almeno uno dei parametri si trova in uno stato "CRITICO", segnalando che il design non è robusto e richiede modifiche immediate.
+
+Questo verdetto finale sintetizza l'analisi complessa in una risposta chiara e diretta.
+
+---
+
+## 3. Installazione
 
 Per eseguire il Crystal Oscillator Validator, è necessario avere installato Python 3.
 
@@ -42,7 +63,7 @@ Per eseguire il Crystal Oscillator Validator, è necessario avere installato Pyt
 
 ---
 
-## 3. Contesto Teorico: L'Oscillatore Pierce
+## 4. Contesto Teorico: L'Oscillatore Pierce
 
 L'applicazione si focalizza sulla validazione di oscillatori a cristallo basati sulla topologia **Pierce**, la più diffusa in ambito di microcontrollori (MCU) per la sua stabilità, semplicità ed efficienza. Un oscillatore Pierce è costituito da un amplificatore invertente (tipicamente una porta logica CMOS interna all'MCU) e una rete di feedback a π (pi-greco) formata dal cristallo di quarzo e due condensatori di carico esterni (CL1, CL2).
 
@@ -52,11 +73,11 @@ L'applicazione si focalizza sulla validazione di oscillatori a cristallo basati 
 
 ---
 
-## 4. Modello Matematico e Implementazione
+## 5. Modello Matematico e Implementazione
 
 Le analisi eseguite dal software si basano sulle formule e le metodologie descritte in documenti di riferimento come la nota applicativa **AN2867 di STMicroelectronics**. Di seguito vengono dettagliate le formule implementate.
 
-### 4.1. Capacità di Carico Effettiva (CL_eff)
+### 5.1. Capacità di Carico Effettiva (CL_eff)
 
 - **Formula:**
   ```
@@ -70,7 +91,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `C_stray`: Capacità parassita totale su un singolo ramo dell'oscillatore.
 - **Interpretazione Fisica:** `CL_eff` rappresenta la capacità totale vista dal cristallo guardando verso la rete di carico. Il suo valore influenza direttamente la frequenza di oscillazione e la stabilità. La formula deriva dalla serie dei due rami capacitivi (ciascuno composto da `CL_sel` in parallelo con `C_stray`).
 
-### 4.2. Transconduttanza Critica (Gm_crit)
+### 5.2. Transconduttanza Critica (Gm_crit)
 
 - **Formula:**
   ```
@@ -84,7 +105,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `C0`: Capacità di shunt del cristallo (dal datasheet).
 - **Interpretazione Fisica:** `Gm_crit` è la **transconduttanza minima** che l'amplificatore interno all'MCU deve possedere per innescare e sostenere l'oscillazione. Essa deve essere sufficiente a compensare le perdite introdotte dalla `Total_ESR` alla frequenza di lavoro. Se la transconduttanza dell'MCU (`Gm_MCU`) è inferiore a questo valore, l'oscillatore non partirà.
 
-### 4.3. Margine di Guadagno (Gain Margin, S_f)
+### 5.3. Margine di Guadagno (Gain Margin, S_f)
 
 - **Formula:**
   ```
@@ -94,7 +115,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
   - `Gm_MCU`: Transconduttanza dell'amplificatore dell'MCU (dal datasheet del microcontrollore).
 - **Interpretazione Fisica:** Il Margine di Guadagno, noto anche come *Safety Factor* (S_f), è un indicatore adimensionale della **robustezza dell'oscillatore**. Indica di quanto il guadagno dell'amplificatore supera il minimo necessario. Un margine elevato garantisce un avvio rapido e affidabile in un ampio range di temperature, tensioni di alimentazione e variazioni di processo (sia del cristallo che dell'MCU).
 
-### 4.4. Drive Level (DL)
+### 5.4. Drive Level (DL)
 
 - **Formula:**
   ```
@@ -108,7 +129,7 @@ Le analisi eseguite dal software si basano sulle formule e le metodologie descri
 
 ---
 
-## 5. Motore di Validazione: Criteri e Soglie
+## 6. Motore di Validazione: Criteri e Soglie
 
 Il software automatizza la valutazione del design confrontando i risultati calcolati con soglie raccomandate dall'industria.
 
@@ -133,25 +154,27 @@ Il software automatizza la valutazione del design confrontando i risultati calco
     - `ATTENZIONE` (`0.8 < DL / DL_max ≤ 1.0`): Il design è al limite. Si raccomanda di considerare una resistenza `Rext` per ridurre la potenza.
     - `CRITICO` (`DL / DL_max > 1.0`): Overdrive. Il cristallo è a rischio di danneggiamento. L'uso di `Rext` è obbligatorio.
 
+Il software sintetizza questi tre controlli in un **Risultato Finale** univoco, visualizzato in modo prominente nell'interfaccia. Lo stato sarà `VALIDATION: PASS` se nessun criterio è `CRITICO`, o `VALIDATION: FAIL` in caso contrario, fornendo al progettista un verdetto immediato e inequivocabile sulla conformità del design.
+
 ---
 
-## 6. Architettura Software e Funzionalità Avanzate
+## 7. Architettura Software e Funzionalità Avanzate
 
-### 6.1. Libreria dei Quarzi Dinamica
+### 7.1. Libreria dei Quarzi Dinamica
 
 Lo strumento gestisce una libreria di componenti persistente, salvata nel file `xtal_library.json` nella directory dell'applicazione. Questo file JSON contiene un dizionario di profili di quarzi, dove ogni profilo memorizza i parametri fondamentali (F, C0, ESR, DL_max).
 
 - **Gestione**: L'utente può aggiungere nuovi componenti alla libreria (`Salva Quarzo`), caricarli per un'analisi (`<Combobox>`) o rimuoverli (`Elimina`).
 - **Scopo**: Centralizzare e riutilizzare le specifiche dei componenti approvati o di uso comune, riducendo l'inserimento manuale e gli errori.
 
-### 6.2. Gestione delle Sessioni di Lavoro
+### 7.2. Gestione delle Sessioni di Lavoro
 
 È fondamentale distinguere la libreria (dati di *componenti*) dalle sessioni (dati di *analisi*).
 
 - **File di Lavoro (`.xtal`)**: Tramite `File > Salva Lavoro`, l'utente può salvare l'intero stato dell'applicazione in un file `.xtal`. Questo file è un'istantanea JSON che include **tutti i parametri di input**: specifiche del quarzo, parametri del circuito (Gm, CL, parassite) e misurazioni (Vpp, sonda).
 - **Scopo**: Archiviare una validazione completa per la documentazione di progetto, confrontare diverse configurazioni circuitali per lo stesso quarzo o riprendere un'analisi interrotta.
 
-### 6.3. Interfaccia Utente e Feedback in Tempo Reale
+### 7.3. Interfaccia Utente e Feedback in Tempo Reale
 
 L'interfaccia è progettata per guidare l'utente e prevenire errori:
 
@@ -161,7 +184,7 @@ L'interfaccia è progettata per guidare l'utente e prevenire errori:
 
 ---
 
-## 7. Protocollo Operativo Consigliato
+## 8. Protocollo Operativo Consigliato
 
 Per una validazione completa e rigorosa, si raccomanda di seguire i seguenti passaggi:
 
@@ -170,6 +193,6 @@ Per una validazione completa e rigorosa, si raccomanda di seguire i seguenti pas
 3.  **Configurazione Iniziale**: Inserire tutti i parametri nello strumento. Selezionare il modello di sonda corretto o inserire la sua capacità manualmente.
 4.  **Misurazione Sperimentale**: Assemblare il circuito e misurare la tensione `Vpp` sul pin di output dell'oscillatore (es. OSC_IN). Inserire questo valore nel campo `Vpp Misurata`.
 5.  **Esecuzione Calcoli**: Premere il pulsante `Esegui Calcoli`.
-6.  **Analisi dei Risultati**: Valutare criticamente i tre criteri nel pannello "Stato di Validazione Finale".
-7.  **Iterazione (se necessario)**: Se uno dei criteri è `CRITICO` o `OTTIMIZZARE`, modificare il design (es. cambiare i valori di `CL_sel`, aggiungere/modificare `Rext_sel`) e ripetere dal punto 4.
-8.  **Archiviazione**: Una volta ottenuto un design robusto, salvare la sessione di lavoro (`File > Salva Lavoro`) per la documentazione di progetto.
+6.  **Analisi dei Risultati**: Valutare criticamente i tre criteri nel pannello "Stato di Validazione" e il risultato finale "PASS/FAIL".
+7.  **Iterazione (se necessario)**: Se il risultato è `FAIL`, modificare il design (es. cambiare i valori di `CL_sel`, aggiungere/modificare `Rext_sel`) e ripetere dal punto 4.
+8.  **Archiviazione**: Una volta ottenuto un design robusto (`PASS`), salvare la sessione di lavoro (`File > Salva Lavoro`) per la documentazione di progetto.
