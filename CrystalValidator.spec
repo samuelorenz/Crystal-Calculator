@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['crystal_validator.py'],
     pathex=[],
     binaries=[],
     datas=[('xtal_library.json', '.')],

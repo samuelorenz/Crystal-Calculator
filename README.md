@@ -58,7 +58,7 @@ Per eseguire il Crystal Oscillator Validator, è necessario avere installato Pyt
 
 4.  **Eseguire il programma:**
     ```bash
-    python main.py
+    python crystal_validator.py
     ```
 
 ---
