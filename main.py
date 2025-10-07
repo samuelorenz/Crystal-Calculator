@@ -946,7 +946,8 @@ class AppController:
         messagebox.showinfo(
             "About Crystal Oscillator Validator",
             f"Crystal Oscillator Validator\nVersione: {AppConfig.APP_VERSION}\n\n"
-            f"Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
+            f"Creato da: Samuele Lorenzoni\n\n"
+            "Questo strumento aiuta a validare il design di un circuito oscillatore a cristallo "
             "basato sui parametri del datasheet e sulle misurazioni del circuito."
         )
 
