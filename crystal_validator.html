@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Oscillator Validator - Web App</title>
+    <link rel="stylesheet" href="crystal_validator.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Crystal Oscillator Validator</h1>
+        </header>
+
+        <section class="card">
+            <div class="library-controls">
+                <label for="xtal-library">Libreria Quarzi:</label>
+                <select id="xtal-library"></select>
+                <button id="save-xtal-btn">Salva Quarzo</button>
+                <button id="delete-xtal-btn" class="delete-btn">Elimina</button>
+            </div>
+        </section>
+
+        <main>
+            <div class="input-section">
+                <!-- Parametri del Cristallo -->
+                <section class="card parameter-group">
+                    <h2>Parametri del Cristallo (XTAL Datasheet)</h2>
+                    <div class="param-grid" id="crystal-params"></div>
+                </section>
+
+                <!-- Parametri Circuito e MCU -->
+                <section class="card parameter-group">
+                    <h2>Parametri Circuito e MCU</h2>
+                    <div class="param-grid" id="circuit-params"></div>
+                </section>
+
+                <!-- Misurazioni -->
+                <section class="card parameter-group">
+                    <h2>Misurazioni (Per calcolo DL effettivo)</h2>
+                    <div class="param-grid" id="measurement-params"></div>
+                </section>
+            </div>
+
+            <div class="control-section">
+                <button id="calculate-btn" class="calc-btn">Esegui Calcoli</button>
+                <button id="reset-btn">Reset Valori</button>
+            </div>
+
+            <div class="output-section card">
+                <h2>REPORT TECNICO: PARAMETRI DERIVATI</h2>
+                <div class="output-grid">
+                    <!-- Le etichette di output verranno popolate da JS -->
+                </div>
+                <hr>
+                <h2>STATO DI VALIDAZIONE</h2>
+                <div class="status-grid">
+                    <!-- Le etichette di stato verranno popolate da JS -->
+                </div>
+                <hr>
+                <div class="final-status">
+                    <h3>RISULTATO FINALE:</h3>
+                    <span id="final-status-text">---</span>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p id="status-bar">Pronto. Inserire i valori per iniziare.</p>
+        </footer>
+
+    </div>
+
+    <!-- Template per i campi di input (verrà clonato da JS) -->
+    <template id="param-template">
+        <div class="param-row">
+            <label class="param-label">Label</label>
+            <div class="param-input-group">
+                <input type="text" class="param-value" />
+                <select class="param-unit"></select>
+            </div>
+            <p class="param-desc">Description</p>
+        </div>
+    </template>
+
+    <script src="crystal_validator.js"></script>
+</body>
+</html>

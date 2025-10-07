@@ -1,0 +1,235 @@
+/* --- Global Styles & Fonts --- */
+body {
+    font-family: 'Times New Roman', Times, serif;
+    line-height: 1.6;
+    color: #000000;
+    background-color: #f0f0f0; /* Light grey background */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 1000px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* --- Header & Footer --- */
+header {
+    background-color: #A00000; /* Academic Red */
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+}
+
+footer {
+    background-color: #f5f5f5;
+    border-top: 1px solid #dddddd;
+    padding: 10px 20px;
+    font-size: 0.9em;
+    color: #555555;
+}
+
+/* --- General Layout & Cards --- */
+main {
+    padding: 20px;
+}
+
+.card {
+    background-color: #fdfdfd;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.parameter-group h2, .output-section h2 {
+    font-size: 1.3em;
+    margin-top: 0;
+    border-bottom: 1px solid #dddddd;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #dddddd;
+    margin: 20px 0;
+}
+
+/* --- Parameter Input Grid --- */
+.param-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.param-row {
+    display: grid;
+    grid-template-columns: 300px 1fr 2fr;
+    align-items: center;
+    gap: 15px;
+}
+
+.param-label {
+    font-weight: bold;
+    text-align: right;
+}
+
+.param-input-group {
+    display: flex;
+}
+
+.param-input-group input {
+    flex-grow: 1;
+    width: 100px; /* Default width */
+}
+
+.param-desc {
+    font-style: italic;
+    color: #555555;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+/* --- Input Fields & Selects --- */
+input[type="text"], select {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    padding: 8px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+}
+
+input.invalid {
+    background-color: #FFEEEE !important;
+    border-color: #C00000 !important;
+}
+
+input:read-only {
+    background-color: #f5f5f5;
+    color: #555555;
+}
+
+/* --- Buttons --- */
+button, .calc-btn {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: 1px solid #cccccc;
+    cursor: pointer;
+    background-color: #f5f5f5;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+.calc-btn {
+    background-color: #A00000; /* Academic Red */
+    color: white;
+    font-weight: bold;
+    border-color: #A00000;
+}
+
+.calc-btn:hover {
+    background-color: #700000; /* Darker Red */
+}
+
+.delete-btn {
+    color: #C00000;
+    border-color: #C00000;
+}
+
+.delete-btn:hover {
+    background-color: #FFEEEE;
+}
+
+.control-section {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.control-section button {
+    margin: 0 10px;
+}
+
+/* --- Output & Status Section --- */
+.output-grid, .status-grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 20px;
+    align-items: center;
+}
+
+.output-label, .status-label {
+    font-weight: bold;
+    text-align: right;
+}
+
+.output-value, .status-text {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    padding: 5px 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.final-status {
+    text-align: center;
+    padding: 20px;
+}
+
+.final-status h3 {
+    display: inline;
+    margin-right: 10px;
+}
+
+#final-status-text {
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+/* --- Status Colors --- */
+.status-ok {
+    color: #006400; /* Dark Green */
+}
+.status-warn {
+    color: #E69500; /* Amber */
+}
+.status-crit {
+    color: #C00000; /* Dark Red */
+}
+.status-stale {
+    color: #777777; /* Gray */
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 800px) {
+    .param-row {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+    .param-label {
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    .output-grid, .status-grid {
+        grid-template-columns: 1fr;
+    }
+    .output-label, .status-label {
+        text-align: left;
+        font-size: 0.9em;
+    }
+}
